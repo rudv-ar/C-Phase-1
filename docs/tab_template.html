@@ -1,0 +1,181 @@
+<!--
+=================================================================
+  TAB TEMPLATE — copy this file when adding a new exercise
+=================================================================
+
+  STEPS:
+  1. Copy the TAB BUTTON into <nav class="tabs"> in your chN.html
+  2. Copy the SECTION BLOCK into <div class="content"> in your chN.html
+  3. Change ex_N to your exercise id everywhere (ex_3, ex_4 etc.)
+  4. Fill in the content
+  5. Delete this comment block
+
+  DISCOVERY TYPES:
+    class="discovery ok"   → green  — final working solution
+    class="discovery info" → cyan   — something learned / explained
+    class="discovery warn" → orange — error documented / bug found
+
+  You can have as many discovery blocks as you want per exercise.
+  Delete the ones you don't need.
+=================================================================
+-->
+
+
+<!-- ============================================================
+  STEP 1 — paste this into <nav class="tabs">
+============================================================ -->
+
+<button class="tab" onclick="show('ex_N', this)">N.X · Exercise Title</button>
+<!--
+  ex_N   → unique id, e.g. ex_3, ex_4 (must match section id below)
+  N.X    → exercise number, e.g. 1.3, 1.4
+  Title  → short name, e.g. "For Loops"
+-->
+
+
+<!-- ============================================================
+  STEP 2 — paste this into <div class="content">
+============================================================ -->
+
+<div class="section" id="ex_N">
+  <!-- id must match the onclick in the tab button above -->
+
+  <!-- HEADER -->
+  <div class="section-title">N.X — Exercise Title</div>
+  <p class="section-desc">One line description of what this exercise covers.</p>
+
+  <!-- CONCEPT TAGS — add/remove as needed -->
+  <div class="concepts">
+    <span class="concept">concept one</span>
+    <span class="concept">concept two</span>
+    <span class="concept">concept three</span>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────
+    FINAL SOLUTION (green left border)
+    Use this for the working, finished version of the code.
+  ────────────────────────────────────────────────────────── -->
+  <div class="discovery ok">
+    <div class="disc-label">Final Solution → filename.c</div>
+    <h3>Short title describing the solution</h3>
+    <div class="term" style="margin-top:10px">
+      <div class="term-bar">
+        <div class="term-dots">
+          <div class="dot r"></div>
+          <div class="dot y"></div>
+          <div class="dot g"></div>
+        </div>
+        <span class="term-label">filename.c</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <div class="term-body"><pre><span class="key">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+    <span class="cmt">// paste your final working code here</span>
+    <span class="cmt">// use spans for syntax highlighting:</span>
+    <span class="cmt">//   .key = orange  (keywords, #include)</span>
+    <span class="cmt">//   .val = purple  (values, function names)</span>
+    <span class="cmt">//   .str = yellow  (strings)</span>
+    <span class="cmt">//   .arg = cyan    (flags, arguments)</span>
+    <span class="cmt">//   .out = grey    (program output)</span>
+    <span class="cmt">//   .err = orange  (error lines)</span>
+    <span class="cmt">//   .p   = green   (shell prompt $)</span>
+    <span class="key">return</span> <span class="val">0</span>;
+}</pre></div>
+    </div>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────
+    DISCOVERY (cyan left border)
+    Use this for concepts learned, explanations, "aha" moments.
+    Repeat this block as many times as needed.
+  ────────────────────────────────────────────────────────── -->
+  <div class="discovery info">
+    <div class="disc-label">Discovery</div>
+    <h3>Title of what you learned</h3>
+    <p>
+      Explain what you discovered. What did you expect? What actually
+      happened? Why? Keep it in your own words — future you will
+      understand your own language better than textbook language.
+    </p>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────
+    ANOTHER DISCOVERY — duplicate as needed
+  ────────────────────────────────────────────────────────── -->
+  <div class="discovery info">
+    <div class="disc-label">Discovery</div>
+    <h3>Another thing you learned</h3>
+    <p>Explanation here.</p>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────
+    ERROR DOCUMENTED (orange left border)
+    Use this for bugs you hit, compiler errors, wrong output.
+    Delete this block if the exercise had no notable errors.
+  ────────────────────────────────────────────────────────── -->
+  <div class="discovery warn">
+    <div class="disc-label">Error Documented → errors/filename.error</div>
+    <h3>Short title of the error</h3>
+
+    <!-- compiler output block (delete if not needed) -->
+    <div class="term" style="margin-top:10px">
+      <div class="term-bar">
+        <div class="term-dots">
+          <div class="dot r"></div>
+          <div class="dot y"></div>
+          <div class="dot g"></div>
+        </div>
+        <span class="term-label">compiler output</span>
+      </div>
+      <div class="term-body"><pre><span class="cmt">// broken code that caused the error</span>
+<span class="err">error: paste compiler error here</span>
+<span class="out">      ^ explanation pointer</span></pre></div>
+    </div>
+
+    <p style="margin-top:10px">
+      What the error means, why it happened, and how you fixed it.
+    </p>
+  </div>
+
+  <!-- ──────────────────────────────────────────────────────────
+    VERSION TABLE (optional)
+    Use if you had multiple iterations of the program.
+    Delete if you went straight to the solution.
+  ────────────────────────────────────────────────────────── -->
+  <table class="vtable">
+    <tr><th>Version</th><th>What changed</th><th>Result</th></tr>
+    <tr>
+      <td class="vname">programv1.c</td>
+      <td>First attempt — describe what you tried</td>
+      <td class="vfail">what went wrong</td>
+    </tr>
+    <tr>
+      <td class="vname">programv2.c</td>
+      <td>What you fixed or changed</td>
+      <td class="vfail">still wrong — describe</td>
+    </tr>
+    <tr>
+      <td class="vname">programv3.c</td>
+      <td>Final fix</td>
+      <td class="vok">✓ correct</td>
+    </tr>
+  </table>
+
+  <!-- ──────────────────────────────────────────────────────────
+    CALLOUT NOTES (optional)
+    .note      = cyan  — general tip or important info
+    .warn-note = orange — gotcha, dangerous pattern, caveat
+    Delete whichever you don't need.
+  ────────────────────────────────────────────────────────── -->
+  <div class="note">
+    <strong>Note:</strong> Use for important tips, references, or things to remember.
+  </div>
+
+  <div class="warn-note">
+    <strong>Warning:</strong> Use for gotchas, undefined behavior, dangerous patterns.
+  </div>
+
+</div>
+<!-- END EXERCISE N.X -->
+
