@@ -1,0 +1,21 @@
+// This is the comment in C 
+
+#include <stdio.h> 
+// This is the standard input output library, here exists a function named printf from which we will be able output to the standard output
+
+main() {
+    printf("Hello World!\n");
+    printf("Ah, the escape characters...!\n");
+}
+
+
+## Error :
+
+helloworld.c:6:1: error: return type defaults to ‘int’ [-Wimplicit-int]
+    6 | main() {
+      | ^~~~
+
+This error - return type defaults to int -? why, that is mordern C.Each C has the int main(void).. return 0;
+
+If the program succeeds, there will be a return code with zero.
+Any non zero return code implies failure.

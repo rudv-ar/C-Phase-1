@@ -1,0 +1,46 @@
+// I realised that the comments can be done like this
+// And also like that give below. With the advent of many standards of C, we have this :
+
+#include <stdio.h>;
+/* This is a stupid comment in C */ 
+// is much easier and is like rust 
+//
+
+// let me define this main function 
+
+int main(void) {
+    // now that I need to define the variables. But how? we use no keyword for declaration of variables in C. But just <type> <varname> = <value>
+    // type is a must thing. Initialise the variable before declaration.
+
+    int f, c, l, h, s // integer type farenheit, lower value, higher value, step value. Ah, I see my LSP showing an error, I found that 'missing ;', but let my compiler tell it and let it be an error.
+
+    l = 0;
+    u = 1000;
+    s = 10;
+    f = l;
+
+    // define the while loop
+    while (f <= h) { // while till f is lessertan or eq to h
+        c = 5 * (f - 32) / 9;
+        printf("%d\t%d\n", f, c);
+        f = f + s;
+    }
+}
+
+## Here is what the compiler with flags tell me
+
+ gcc -Wall -Wextra -Wpedantic -std=c11 -o fartocelv1 fartocelv1.c
+fartocelv1.c:4:19: warning: extra tokens at end of ‘#include’ directive
+    4 | #include <stdio.h>;
+      |                   ^
+fartocelv1.c: In function ‘main’:
+fartocelv1.c:17:5: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘l’
+   17 |     l = 0;
+      |     ^
+fartocelv1.c:18:5: error: ‘u’ undeclared (first use in this function)
+   18 |     u = 1000;
+      |     ^
+fartocelv1.c:18:5: note: each undeclared identifier is reported only once for each function it appears in
+fartocelv1.c:19:5: error: ‘s’ undeclared (first use in this function)
+   19 |     s = 10;
+      |     ^

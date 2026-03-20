@@ -1,0 +1,12 @@
+// what will this output?
+
+#include <stdio.h>
+
+int main(void) {
+    printf("%d\n");
+    return 0;
+}
+
+### Ah, got it. This is a critical memory leak error. As we used while loop in our previous code, it looped untill it f = u, but we cann see that it produced a different output each time. So let me do this. 
+
+- Setup a bash script to run that checkthis.c.ebin while times, ctrl c to cancel

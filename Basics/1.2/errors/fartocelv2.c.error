@@ -1,0 +1,144 @@
+#include <stdio.h>
+
+int main(void) {
+    int u, l, s, c, f;
+    // the compiler does not explicitly tell that I missed this semicolon; but result? they simply became undeclared and broke the remaining stuff.
+    // Declaraition part here.
+    u = 1000;
+    l = 0;
+    s = 10;
+    f = l;
+
+    // the while loop
+    while (f<=u) {
+        c = 5 * (32-f) / 9;
+        printf("%d\t%d\n"); // If I never provided arguments, see what happens
+        f = f + s;
+    }
+
+    return 0;
+
+}
+
+### I suspected that this will fail and produce no output, but what kind of output is that? Why is that output like that. Should not it output nothing? 
+
+gcc -Wall -Wextra -Wpedantic -std=c11 -o fartocelv2 fartocelv2.c; ./fartocelv2
+fartocelv2.c: In function ‘main’:
+fartocelv2.c:15:18: warning: format ‘%d’ expects a matching ‘int’ argument [-Wformat=]
+   15 |         printf("%d\t%d\n"); // If I never provided arguments, see what happens
+      |                 ~^
+      |                  |
+      |                  int
+fartocelv2.c:15:22: warning: format ‘%d’ expects a matching ‘int’ argument [-Wformat=]
+   15 |         printf("%d\t%d\n"); // If I never provided arguments, see what happens
+      |                     ~^
+      |                      |
+      |                      int
+fartocelv2.c:4:18: warning: variable ‘c’ set but not used [-Wunused-but-set-variable]
+    4 |     int u, l, s, c, f;
+      |                  ^
+-1575818216	0
+359645200	0
+1024	0
+1024	0
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1
+1024	-1 
+
+## Warnings produced by the compiler are like - dude ignore it, I am not going to output. But C cheated. it dumped memory? it is the int range for that int type.
+#
+# let me try this... printf("%d\n");
