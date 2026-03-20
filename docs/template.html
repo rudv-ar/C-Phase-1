@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOPIC · ChN · C-Phase-1</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --panel: #131720;
+    --border: #1e2535;
+    --accent: #00e5ff;
+    --green: #00ff88;
+    --orange: #ff6b35;
+    --purple: #bd93f9;
+    --dim: #4a5568;
+    --text: #cdd6f4;
+    --muted: #6b7a99;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 100;
+  }
+  .hero {
+    padding: 40px 40px 30px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0,229,255,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 11px;
+    color: var(--dim);
+  }
+  .breadcrumb a { color: var(--dim); text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.15s; }
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb span { color: var(--border); }
+  .breadcrumb .current { color: var(--muted); }
+  h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 5vw, 64px); letter-spacing: 0.04em; line-height: 0.9; color: #fff; }
+  h1 span { color: var(--accent); }
+  .subtitle { margin-top: 10px; color: var(--muted); font-size: 12px; letter-spacing: 0.05em; }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 14px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: none;
+    background: none;
+    color: var(--dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .content { padding: 40px; max-width: 960px; }
+  .section { display: none; }
+  .section.active { display: block; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #fff; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .section-desc { font-size: 12px; color: var(--muted); margin-bottom: 14px; letter-spacing: 0.04em; }
+  .concepts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+  .concept { font-size: 10px; padding: 3px 10px; background: rgba(189,147,249,0.08); border: 1px solid rgba(189,147,249,0.2); color: var(--purple); letter-spacing: 0.1em; }
+
+  .discovery { margin-bottom: 28px; border-left: 2px solid var(--border); padding-left: 24px; }
+  .discovery.ok   { border-left-color: var(--green); }
+  .discovery.warn { border-left-color: var(--orange); }
+  .discovery.info { border-left-color: var(--accent); }
+  .disc-label { font-size: 10px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px; }
+  .discovery.ok   .disc-label { color: var(--green); }
+  .discovery.warn .disc-label { color: var(--orange); }
+  .discovery.info .disc-label { color: var(--accent); }
+  .discovery h3 { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 8px; }
+  .discovery p  { font-size: 12px; color: var(--muted); line-height: 1.75; }
+
+  .term { background: #080a0f; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin: 10px 0; }
+  .term-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: #0e1018; border-bottom: 1px solid var(--border); }
+  .term-dots { display: flex; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; }
+  .dot.y { background: #febc2e; }
+  .dot.g { background: #28c840; }
+  .term-label { font-size: 11px; color: var(--dim); letter-spacing: 0.1em; }
+  .copy-btn { background: none; border: 1px solid var(--dim); color: var(--dim); font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 3px 10px; cursor: pointer; letter-spacing: 0.05em; transition: all 0.2s; }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--green); color: var(--green); }
+  .term-body { padding: 16px; overflow-x: auto; }
+  .term-body pre { font-size: 13px; line-height: 1.8; color: var(--text); white-space: pre; }
+
+  .p   { color: var(--green); }
+  .cmd { color: #fff; font-weight: 600; }
+  .arg { color: var(--accent); }
+  .cmt { color: var(--dim); font-style: italic; }
+  .out { color: var(--muted); }
+  .key { color: var(--orange); }
+  .val { color: var(--purple); }
+  .str { color: #f1fa8c; }
+  .err { color: var(--orange); }
+
+  .note { background: rgba(0,229,255,0.05); border-left: 3px solid var(--accent); padding: 12px 16px; font-size: 12px; color: var(--muted); margin: 12px 0 24px; line-height: 1.6; }
+  .note strong { color: var(--accent); }
+  .warn-note { background: rgba(255,107,53,0.05); border-left: 3px solid var(--orange); padding: 12px 16px; font-size: 12px; color: var(--muted); margin: 12px 0 24px; line-height: 1.6; }
+  .warn-note strong { color: var(--orange); }
+
+  .vtable { width: 100%; border-collapse: collapse; margin: 16px 0 28px; }
+  .vtable th { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .vtable td { font-size: 12px; padding: 10px 12px; border-bottom: 1px solid rgba(30,37,53,0.6); vertical-align: top; color: var(--muted); }
+  .vtable tr:hover td { background: rgba(255,255,255,0.02); }
+  .vname { color: var(--accent) !important; font-weight: 600; }
+  .vok   { color: var(--green) !important; }
+  .vfail { color: var(--orange) !important; }
+
+  code { background: rgba(0,229,255,0.08); color: var(--accent); padding: 1px 6px; font-size: 0.9em; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  @media (max-width: 600px) {
+    .hero, .content { padding: 24px 20px; }
+    .tabs { padding: 0 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+  HOW TO USE THIS TEMPLATE
+  ================================================
+  1. Copy this file to the right folder:
+       docs/YourTopic/chN.html
+
+  2. Update <title>, breadcrumb, h1, subtitle
+
+  3. Add a tab + section for each exercise:
+       - Add <button class="tab"> in <nav>
+       - Add <div class="section" id="exNN"> in .content
+
+  4. Register in index.html:
+       - Add <a class="chapter"> card under the right topic
+       - If new topic: add a new <div class="topic"> block
+
+  DISCOVERY TYPES:
+    .ok   = green  — final working solution
+    .info = cyan   — something learned / explained
+    .warn = orange — error documented / bug found
+
+  THAT'S IT.
+============================================================ -->
+
+<div class="hero">
+  <div class="breadcrumb">
+    <a href="../index.html">C-Phase-1</a>       <!-- update path depth if needed -->
+    <span>/</span>
+    <a href="../index.html">TOPIC</a>            <!-- replace TOPIC -->
+    <span>/</span>
+    <span class="current">Chapter N</span>       <!-- replace N -->
+  </div>
+  <h1>CHAPTER <span>N</span></h1>               <!-- replace N -->
+  <p class="subtitle">// K&amp;R · Chapter subtitle here</p>
+</div>
+
+<nav class="tabs">
+  <!-- ADD ONE BUTTON PER EXERCISE -->
+  <button class="tab active" onclick="show('ex_1', this)">N.1 · Exercise Title</button>
+  <!-- <button class="tab" onclick="show('ex_2', this)">N.2 · Next Exercise</button> -->
+</nav>
+
+<div class="content">
+
+  <!-- =========================================================
+    EXERCISE N.1 — copy this entire block for each new exercise
+  ========================================================== -->
+  <div class="section active" id="ex_1">
+
+    <div class="section-title">N.1 — Exercise Title</div>
+    <p class="section-desc">One line description of what this exercise is about.</p>
+    <div class="concepts">
+      <span class="concept">concept one</span>
+      <span class="concept">concept two</span>
+    </div>
+
+    <!-- FINAL SOLUTION -->
+    <div class="discovery ok">
+      <div class="disc-label">Final Solution → filename.c</div>
+      <h3>Short title for the solution</h3>
+      <div class="term" style="margin-top:10px">
+        <div class="term-bar">
+          <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <span class="term-label">filename.c</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <div class="term-body"><pre><span class="key">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+    <span class="cmt">// your final solution here</span>
+    <span class="key">return</span> <span class="val">0</span>;
+}</pre></div>
+      </div>
+    </div>
+
+    <!-- SOMETHING LEARNED -->
+    <div class="discovery info">
+      <div class="disc-label">Discovery</div>
+      <h3>What you learned</h3>
+      <p>Explain what you discovered, what you expected vs what happened, and why.</p>
+    </div>
+
+    <!-- ERROR DOCUMENTED (use if you have one) -->
+    <div class="discovery warn">
+      <div class="disc-label">Error Documented → errors/filename.error</div>
+      <h3>Error title</h3>
+      <div class="term" style="margin-top:10px">
+        <div class="term-bar">
+          <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <span class="term-label">compiler output</span>
+        </div>
+        <div class="term-body"><pre><span class="cmt">// broken code</span>
+<span class="err">error: description here</span></pre></div>
+      </div>
+      <p style="margin-top:10px">What the error means and how you fixed it.</p>
+    </div>
+
+    <!-- VERSION TABLE (use if you had multiple iterations) -->
+    <table class="vtable">
+      <tr><th>Version</th><th>What changed</th><th>Result</th></tr>
+      <tr><td class="vname">programv1.c</td><td>First attempt description</td><td class="vfail">what went wrong</td></tr>
+      <tr><td class="vname">programv2.c</td><td>What you fixed</td><td class="vok">✓ correct</td></tr>
+    </table>
+
+    <!-- NOTE / WARN-NOTE (optional callouts) -->
+    <div class="note">
+      <strong>Note:</strong> Use this for important info or tips.
+    </div>
+    <div class="warn-note">
+      <strong>Warning:</strong> Use this for gotchas or dangerous patterns.
+    </div>
+
+  </div>
+  <!-- END EXERCISE N.1 -->
+
+</div><!-- .content -->
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+function copyCode(btn) {
+  const pre = btn.closest('.term').querySelector('pre');
+  const raw = pre ? pre.innerText.trim() : '';
+  navigator.clipboard.writeText(raw).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+</script>
+</body>
+</html>
+
