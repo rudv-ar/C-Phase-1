@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basics · Ch1 · C-Phase-1</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --panel: #131720;
+    --border: #1e2535;
+    --accent: #00e5ff;
+    --green: #00ff88;
+    --orange: #ff6b35;
+    --purple: #bd93f9;
+    --dim: #4a5568;
+    --text: #cdd6f4;
+    --muted: #6b7a99;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 40px 40px 30px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0,229,255,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 11px;
+    color: var(--dim);
+  }
+  .breadcrumb a {
+    color: var(--dim);
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: color 0.15s;
+  }
+  .breadcrumb a:hover { color: var(--accent); }
+  .breadcrumb span { color: var(--border); }
+  .breadcrumb .current { color: var(--muted); }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 5vw, 64px);
+    letter-spacing: 0.04em;
+    line-height: 0.9;
+    color: #fff;
+  }
+  h1 span { color: var(--accent); }
+  .subtitle { margin-top: 10px; color: var(--muted); font-size: 12px; letter-spacing: 0.05em; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 14px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: none;
+    background: none;
+    color: var(--dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* CONTENT */
+  .content { padding: 40px; max-width: 960px; }
+  .section { display: none; }
+  .section.active { display: block; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* SECTION HEADER */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    color: #fff;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .section-desc { font-size: 12px; color: var(--muted); margin-bottom: 14px; letter-spacing: 0.04em; }
+  .concepts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+  .concept {
+    font-size: 10px;
+    padding: 3px 10px;
+    background: rgba(189,147,249,0.08);
+    border: 1px solid rgba(189,147,249,0.2);
+    color: var(--purple);
+    letter-spacing: 0.1em;
+  }
+
+  /* DISCOVERY BLOCKS */
+  .discovery {
+    margin-bottom: 28px;
+    border-left: 2px solid var(--border);
+    padding-left: 24px;
+  }
+  .discovery.ok   { border-left-color: var(--green); }
+  .discovery.warn { border-left-color: var(--orange); }
+  .discovery.info { border-left-color: var(--accent); }
+  .disc-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .discovery.ok   .disc-label { color: var(--green); }
+  .discovery.warn .disc-label { color: var(--orange); }
+  .discovery.info .disc-label { color: var(--accent); }
+  .discovery h3 { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 8px; }
+  .discovery p  { font-size: 12px; color: var(--muted); line-height: 1.75; }
+
+  /* TERMINAL */
+  .term {
+    background: #080a0f;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: #0e1018;
+    border-bottom: 1px solid var(--border);
+  }
+  .term-dots { display: flex; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; }
+  .dot.y { background: #febc2e; }
+  .dot.g { background: #28c840; }
+  .term-label { font-size: 11px; color: var(--dim); letter-spacing: 0.1em; }
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--dim);
+    color: var(--dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--green); color: var(--green); }
+  .term-body { padding: 16px; overflow-x: auto; }
+  .term-body pre { font-size: 13px; line-height: 1.8; color: var(--text); white-space: pre; }
+
+  .p   { color: var(--green); }
+  .cmd { color: #fff; font-weight: 600; }
+  .arg { color: var(--accent); }
+  .cmt { color: var(--dim); font-style: italic; }
+  .out { color: var(--muted); }
+  .key { color: var(--orange); }
+  .val { color: var(--purple); }
+  .str { color: #f1fa8c; }
+  .err { color: var(--orange); }
+
+  /* NOTE */
+  .note {
+    background: rgba(0,229,255,0.05);
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 12px 0 24px;
+    line-height: 1.6;
+  }
+  .note strong { color: var(--accent); }
+  .warn-note {
+    background: rgba(255,107,53,0.05);
+    border-left: 3px solid var(--orange);
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 12px 0 24px;
+    line-height: 1.6;
+  }
+  .warn-note strong { color: var(--orange); }
+
+  /* VERSION TABLE */
+  .vtable { width: 100%; border-collapse: collapse; margin: 16px 0 28px; }
+  .vtable th { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .vtable td { font-size: 12px; padding: 10px 12px; border-bottom: 1px solid rgba(30,37,53,0.6); vertical-align: top; color: var(--muted); }
+  .vtable tr:hover td { background: rgba(255,255,255,0.02); }
+  .vname { color: var(--accent) !important; font-weight: 600; }
+  .vok   { color: var(--green) !important; }
+  .vfail { color: var(--orange) !important; }
+
+  code {
+    background: rgba(0,229,255,0.08);
+    color: var(--accent);
+    padding: 1px 6px;
+    font-size: 0.9em;
+  }
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  @media (max-width: 600px) {
+    .hero, .content { padding: 24px 20px; }
+    .tabs { padding: 0 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="breadcrumb">
+    <a href="../index.html">C-Phase-1</a>
+    <span>/</span>
+    <a href="../index.html">Basics</a>
+    <span>/</span>
+    <span class="current">Chapter 1</span>
+  </div>
+  <h1>CHAPTER <span>ONE</span></h1>
+  <p class="subtitle">// K&amp;R · A Tutorial Introduction</p>
+</div>
+
+<nav class="tabs">
+  <button class="tab active" onclick="show('ex11', this)">1.1 · Hello World</button>
+  <button class="tab" onclick="show('ex12', this)">1.2 · Fahrenheit→Celsius</button>
+  <!-- ADD NEW EXERCISE TABS HERE -->
+  <!-- <button class="tab" onclick="show('ex13', this)">1.3 · Title</button> -->
+</nav>
+
+<div class="content">
+
+  <!-- =========================================================== -->
+  <!-- 1.1 · HELLO WORLD                                           -->
+  <!-- =========================================================== -->
+  <div class="section active" id="ex11">
+    <div class="section-title">1.1 — Hello World</div>
+    <p class="section-desc">First program. Structure, output, escape characters, return codes.</p>
+    <div class="concepts">
+      <span class="concept">#include</span>
+      <span class="concept">main(void)</span>
+      <span class="concept">printf</span>
+      <span class="concept">escape characters</span>
+      <span class="concept">return 0</span>
+    </div>
+
+    <div class="discovery ok">
+      <div class="disc-label">Final Solution → helloworld.modern.c</div>
+      <h3>The correct modern form</h3>
+      <div class="term" style="margin-top:10px">
+        <div class="term-bar">
+          <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <span class="term-label">helloworld.modern.c</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <div class="term-body"><pre><span class="key">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+    printf(<span class="str">"Hello World!\n"</span>);
+    printf(<span class="str">"Ah, the escape characters...!\n"</span>);
+    <span class="key">return</span> <span class="val">0</span>;
+}</pre></div>
+      </div>
+    </div>
+
+    <div class="discovery info">
+      <div class="disc-label">Discovery</div>
+      <h3>int main() vs int main(void)</h3>
+      <p>In C, <code>main()</code> means "accepts unspecified arguments." <code>main(void)</code> explicitly means none. The <code>-Wpedantic</code> flag catches this. Modern C always uses <code>int main(void)</code>.</p>
+    </div>
+
+    <div class="discovery info">
+      <div class="disc-label">Discovery</div>
+      <h3>Why does missing return 0 still work?</h3>
+      <p>In C99 and later the compiler inserts <code>return 0;</code> implicitly at the end of <code>main</code> if omitted. This only applies to <code>main</code> — no other function gets this treatment. Explicit is always better.</p>
+    </div>
+
+    <div class="discovery warn">
+      <div class="disc-label">Error Documented → errors/helloworld.c.error</div>
+      <h3>Return type defaults to int</h3>
+      <div class="term" style="margin-top:10px">
+        <div class="term-bar">
+          <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <span class="term-label">compiler output</span>
+        </div>
+        <div class="term-body"><pre><span class="cmt">// broken — missing int before main</span>
+<span class="err">main() {</span>
+
+<span class="out">helloworld.c:6:1: error: return type defaults to 'int' [-Wimplicit-int]</span>
+<span class="out">    6 | main() {</span>
+<span class="out">      | ^~~~</span></pre></div>
+      </div>
+      <p style="margin-top:10px">Old K&amp;R C allowed omitting the return type — implicit <code>int</code>. Modern C with <code>-Wall</code> flags this as an error. Always write <code>int main(void)</code>.</p>
+    </div>
+  </div>
+
+  <!-- =========================================================== -->
+  <!-- 1.2 · FAHRENHEIT TO CELSIUS                                 -->
+  <!-- =========================================================== -->
+  <div class="section" id="ex12">
+    <div class="section-title">1.2 — Fahrenheit → Celsius</div>
+    <p class="section-desc">K&amp;R Chapter 1 table program. Five versions, three bugs, two big discoveries.</p>
+    <div class="concepts">
+      <span class="concept">int variables</span>
+      <span class="concept">while loop</span>
+      <span class="concept">format specifiers</span>
+      <span class="concept">integer division</span>
+      <span class="concept">undefined behavior</span>
+    </div>
+
+    <div class="discovery ok">
+      <div class="disc-label">Final Solution → fartocelv4.c</div>
+      <h3>Multiply before dividing</h3>
+      <div class="term" style="margin-top:10px">
+        <div class="term-bar">
+          <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <span class="term-label">fartocelv4.c</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <div class="term-body"><pre><span class="key">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+    <span class="key">int</span> u, l, s, c, f;
+    u = <span class="val">1000</span>;  l = <span class="val">0</span>;  s = <span class="val">10</span>;  f = l;
+
+    <span class="key">while</span> (f &lt;= u) {
+        c = <span class="val">5</span> * (f - <span class="val">32</span>) / <span class="val">9</span>;  <span class="cmt">// multiply FIRST, then divide</span>
+        printf(<span class="str">"%d\t%d\n"</span>, f, c);
+        f = f + s;
+    }
+    <span class="key">return</span> <span class="val">0</span>;
+}</pre></div>
+      </div>
+    </div>
+
+    <table class="vtable">
+      <tr><th>Version</th><th>What changed</th><th>Result</th></tr>
+      <tr><td class="vname">fartocelv1.c</td><td><code>#include &lt;stdio.h&gt;;</code> — semicolon after include. Missing <code>;</code> after variable declaration.</td><td class="vfail">compiler errors</td></tr>
+      <tr><td class="vname">fartocelv2.c</td><td>Fixed syntax. But <code>printf("%d\t%d\n")</code> — no arguments.</td><td class="vfail">garbage output</td></tr>
+      <tr><td class="vname">fartocelv3.c</td><td>Added arguments. Formula <code>5 * (32-f) / 9</code> — wrong order.</td><td class="vfail">negative results</td></tr>
+      <tr><td class="vname">fartocelv4.c</td><td>Fixed formula to <code>5 * (f-32) / 9</code>.</td><td class="vok">✓ correct</td></tr>
+      <tr><td class="vname">fartocelv5.c</td><td>Tried <code>(5/9) * (f-32)</code> to test operator precedence.</td><td class="vfail">all zeros</td></tr>
+    </table>
+
+    <div class="discovery warn">
+      <div class="disc-label">Big Discovery · Undefined Behavior</div>
+      <h3>printf with no arguments reads stack memory</h3>
+      <p><code>printf("%d\t%d\n")</code> with no arguments told printf to read two integers from the stack — but none were provided. C doesn't protect you. It reads whatever bytes happen to be there. Output was random integers in int range (±2³¹). Proved with a bash POC script run 200+ times — different values every run, always within int bounds.</p>
+      <div class="warn-note" style="margin-top:12px">
+        <strong>Lesson:</strong> compiler warnings exist for a reason. <code>-Wformat=</code> catches this at compile time. Always compile with <code>-Wall -Wextra</code>.
+      </div>
+    </div>
+
+    <div class="discovery warn">
+      <div class="disc-label">Big Discovery · Integer Division Truncation</div>
+      <h3>(5/9) is 0, not 0.555… — everything becomes zero</h3>
+      <p>In C, dividing two integers discards the fractional part. <code>5/9 = 0</code>. Then <code>0 × anything = 0</code>. Every row printed <code>0</code>.</p>
+      <div class="warn-note" style="margin-top:12px">
+        <strong>Fix:</strong> <code>5 * (f-32) / 9</code> — multiply first so the numerator is large enough for division to produce a meaningful result. Or use <code>float</code>/<code>double</code> — covered later.
+      </div>
+    </div>
+
+    <div class="discovery warn">
+      <div class="disc-label">Error Documented · Cascading Errors</div>
+      <h3>One missing semicolon → everything "undeclared"</h3>
+      <p>Missing <code>;</code> after the variable declaration caused the compiler to report every subsequent variable as "undeclared." The error message pointed to the wrong place. Fix the <em>first</em> error first — a single mistake creates a cascade of misleading errors downstream.</p>
+    </div>
+  </div>
+
+  <!-- =========================================================== -->
+  <!-- ADD NEW EXERCISES BELOW — copy this block                   -->
+  <!-- =========================================================== -->
+  <!--
+  <div class="section" id="ex13">
+    <div class="section-title">1.3 — Exercise Title</div>
+    <p class="section-desc">One line description.</p>
+    <div class="concepts">
+      <span class="concept">concept</span>
+    </div>
+
+    <div class="discovery ok">
+      <div class="disc-label">Final Solution → filename.c</div>
+      <h3>Solution title</h3>
+      <div class="term" style="margin-top:10px">
+        <div class="term-bar">
+          <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <span class="term-label">filename.c</span>
+          <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        </div>
+        <div class="term-body"><pre><span class="cmt">// your code here</span></pre></div>
+      </div>
+    </div>
+
+    <div class="discovery info">
+      <div class="disc-label">Discovery</div>
+      <h3>What you learned</h3>
+      <p>Explanation.</p>
+    </div>
+
+    <div class="discovery warn">
+      <div class="disc-label">Error Documented → errors/filename.error</div>
+      <h3>Error title</h3>
+      <p>What happened and why.</p>
+    </div>
+  </div>
+
+  ALSO: add tab button in <nav class="tabs">:
+  <button class="tab" onclick="show('ex13', this)">1.3 · Title</button>
+  -->
+
+</div>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+function copyCode(btn) {
+  const pre = btn.closest('.term').querySelector('pre');
+  const raw = pre ? pre.innerText.trim() : '';
+  navigator.clipboard.writeText(raw).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+</script>
+</body>
+</html>
+
