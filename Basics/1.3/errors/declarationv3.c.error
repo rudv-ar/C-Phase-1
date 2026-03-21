@@ -1,0 +1,20 @@
+// let me try initialising c variables in rust way, will it work? the K and R does not mention this. 
+
+#include <stdio.h>
+
+int main(void) {
+    int v = 100;
+    int u,z = 300; // Added this semicolon after the LSP instruction... let's check this, what happens?
+    printf("%d\t%d\t%d\n", v, u, z);
+
+
+}
+
+## ah, come on mane... Again we assumed the wrong thing...
+
+int u,z = 300 defaults to u = 0, z = 300. Why is that so? whats the matter?
+The exact clangd output is shown below...
+
+
+## The output 
+100	0	300

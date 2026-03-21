@@ -1,0 +1,28 @@
+// let me try initialising c variables in rust way, will it work? the K and R does not mention this. 
+
+#include <stdio.h>
+
+int main(void) {
+    int v = 100;
+    int u,z = 300,200;; // Added this semicolon after the LSP instruction... let's check this, what happens?
+    printf("%d\t%d\t%d\n", v, u, z);
+
+
+}
+
+## Again errored. And I got this this time...
+
+ clang declarationv2.c -o declarationv2
+declarationv2.c:7:19: error: expected identifier or '('
+    7 |     int u,z = 300,200;; // Added this semicolon after the LSP instruction... let's check this, what happens?
+      |                   ^
+declarationv2.c:7:19: error: expected ';' at end of declaration
+    7 |     int u,z = 300,200;; // Added this semicolon after the LSP instruction... let's check this, what happens?
+      |                   ^
+      |                   ;
+2 errors generated.
+
+## Inference
+This means that we cannot assign to this like python does, or like rust does. We need to take of that ,200; and thats it. But this also makes me clear that u,z = 300 > we are allowed to assign multiple variables same value in C
+
+This can be done in v3

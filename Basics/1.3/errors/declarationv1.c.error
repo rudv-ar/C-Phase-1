@@ -1,0 +1,31 @@
+// let me try initialising c variables in rust way, will it work? the K and R does not mention this. 
+
+#include <stdio.h>
+
+int main(void) {
+    int v = 100;
+    int u,z = 300,400; // guess this syntax is not valid, the lsp sport it... But let it be an error
+    
+    printf("%d\t%d\t%d\n", v, u, z);
+
+
+}
+
+## On seeing the compiler output, we get this : I used clang this time...
+
+clang declarationv1.c -o declarationv1
+declarationv1.c:7:19: error: expected identifier or '('
+    7 |     int u,z = 300,400; // guess this syntax is not valid, the lsp sport it... But let it be an error
+      |                   ^
+declarationv1.c:7:19: error: expected ';' at end of declaration
+    7 |     int u,z = 300,400; // guess this syntax is not valid, the lsp sport it... But let it be an error
+      |                   ^
+      |                   ; -- here? What is this telling?
+2 errors generated.
+
+Ah, wait, it is asking me to insert a semicolon and the error is resolved?
+
+### Inferences 
+ - We are allowed to declare the variable as well as initialise it at the same time instead of wasting precious time and blocks of code like.
+ - Nice, like it. It is just rust syntax without let and x: int = stuffss..
+ - But let me also check this by adding a semicolon in v2

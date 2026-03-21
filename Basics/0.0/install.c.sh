@@ -113,7 +113,7 @@ done
 # =============================================================================
 
 # run_cmd — execute a command, or print it if --dry-run is active.
-# usage: run_cmd sudo pacman -S --needed neovim
+# usage: run_cmd sudo pacman -S neovim
 run_cmd() {
     if [[ "$dry_run" == true ]]; then
         printf "${warn_tag} ${yellow}[dry-run]${reset} would run: ${white}$*${reset}\n"
@@ -298,7 +298,7 @@ printf "${step_tag} Running ${cyan}sudo pacman -Syu${reset} to sync and upgrade 
 printf "${warn_tag} This may take a few minutes depending on how many updates are pending.\n\n"
 sleep 1
 
-run_cmd sudo pacman -Syu --noconfirm
+run_cmd sudo pacman -Syu --noconfirm --needed
 
 printf "\n${ok_tag} System is up to date.\n"
 sleep 1
@@ -317,7 +317,7 @@ section_header "Step 2 — Core Toolchain"
 printf "${step_tag} Installing compiler, debugger, and build tools...\n\n"
 sleep 1
 
-run_cmd sudo pacman -S --needed --noconfirm $pacman_needed \
+run_cmd sudo pacman -S --noconfirm --needed $pacman_needed \
     base-devel \
     gcc \
     gdb \
@@ -353,7 +353,7 @@ section_header "Step 3 — Editor Dependencies"
 printf "${step_tag} Installing Neovim and its dependencies...\n\n"
 sleep 1
 
-run_cmd sudo pacman -S --needed --noconfirm $pacman_needed \
+run_cmd sudo pacman -S --noconfirm --needed $pacman_needed \
     neovim \
     git \
     ripgrep \
@@ -429,6 +429,19 @@ install_nvchad() {
     printf "\n${ok_tag} NvChad cloned successfully.\n\n"
     sleep 1
 
+    # launch nvim headlessly to let lazy.nvim download and install all plugins.
+    # --headless runs nvim with no UI attached — safe to run in a script.
+    # the +qa at the end quits nvim once the sync command finishes.
+    # this step can take 1-3 minutes on first run depending on network speed.
+    # do not interrupt it — if it is killed mid-install, delete ~/.config/nvim
+    # and ~/.local/share/nvim and rerun the installer.
+    printf "${step_tag} Installing all NvChad plugins headlessly — this will take a minute...\n"
+    printf "${warn_tag} Do not interrupt this step.\n\n"
+    run_cmd nvim --headless +"lua require('lazy').sync()" +qa
+
+    printf "\n${ok_tag} All plugins installed successfully.\n\n"
+    sleep 1
+
     printf "${step_tag} Writing clangd LSP configuration...\n"
     printf "${info_tag} NvChad's lspconfig.lua lives at ${cyan}~/.config/nvim/lua/configs/lspconfig.lua${reset}\n"
     printf "${info_tag} We use cat with a heredoc to write the file — no editor required.\n\n"
@@ -460,7 +473,7 @@ install_nvchad() {
 -- for all filetypes that server supports.
 --
 -- clangd activates for: .c .cpp .h .hpp .objc .cu files
--- It requires clangd to be installed: sudo pacman -S --needed clang
+-- It requires clangd to be installed: sudo pacman -S clang
 -- It uses compile_flags.txt or compile_commands.json as the project root.
 --
 -- To verify LSP is working: open a .c file and run :LspInfo
@@ -475,11 +488,11 @@ require("nvchad.configs.lspconfig").defaults()
 -- server name must match the nvim-lspconfig name exactly.
 -- reference: https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md
 local servers = {
-    "clangd",    -- C/C++ — sudo pacman -S --needed clang
-    "lua_ls",    -- Lua (for editing nvim config) — sudo pacman -S --needed lua-language-server
+    "clangd",    -- C/C++ — sudo pacman -S clang
+    "lua_ls",    -- Lua (for editing nvim config) — sudo pacman -S lua-language-server
     "bashls",    -- Bash — sudo npm install -g bash-language-server
-    -- "rust_analyzer",  -- Rust — sudo pacman -S --needed rust-analyzer (uncomment when needed)
-    -- "pyright",        -- Python — sudo pacman -S --needed pyright     (uncomment when needed)
+    -- "rust_analyzer",  -- Rust — sudo pacman -S rust-analyzer (uncomment when needed)
+    -- "pyright",        -- Python — sudo pacman -S pyright     (uncomment when needed)
 }
 
 -- activate all servers in the list
@@ -546,10 +559,23 @@ install_lazyvim() {
     printf "\n${ok_tag} LazyVim cloned successfully.\n\n"
     sleep 1
 
+    # launch nvim headlessly to install all LazyVim core plugins before we write
+    # our config on top. this ensures lazy.nvim is fully initialised and all plugin
+    # directories exist. the clangd extra is added to lazy.lua after this step —
+    # on next nvim launch lazy.nvim detects the new import and installs it.
+    printf "${step_tag} Installing all LazyVim plugins headlessly — this will take a minute...\n"
+    printf "${warn_tag} Do not interrupt this step.\n\n"
+    run_cmd nvim --headless +"lua require('lazy').sync()" +qa
+
+    printf "\n${ok_tag} All plugins installed successfully.\n\n"
+    sleep 1
+
     printf "${step_tag} Writing clangd extra into lazy.lua...\n"
     printf "${info_tag} LazyVim uses a single import line to activate the official clangd extra.\n"
     printf "${info_tag} The extra configures: background indexing, clang-tidy, inlay hints,\n"
-    printf "${info_tag} detailed completions, and a ${cyan}<leader>ch${reset} switch source/header keybinding.\n\n"
+    printf "${info_tag} detailed completions, and a ${cyan}<leader>ch${reset} switch source/header keybinding.\n"
+    printf "${info_tag} On next nvim launch, lazy.nvim detects the new import and installs\n"
+    printf "${info_tag} the clangd extra plugins automatically.\n\n"
     sleep 1
 
     # write lazy.lua — this is the LazyVim entry point where extras are imported.
