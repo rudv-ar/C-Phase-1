@@ -100,6 +100,7 @@
 <nav class="tabs">
   <button class="tab active" onclick="show('ex11', this)">1.1 · Hello World</button>
   <button class="tab" onclick="show('ex12', this)">1.2 · Fahrenheit→Celsius</button>
+  <button class="tab" onclick="show('ex13', this)">1.3 · Exploratory</button>
 </nav>
 
 <div class="content">
@@ -739,6 +740,567 @@
 
 </div>
 <!-- END 1.2 -->
+<div class="section" id="ex13">
+
+  <div class="section-title">1.3 — Variable Declarations · Exploratory</div>
+  <p class="section-desc">
+    Not a K&amp;R exercise. A self-directed investigation into C variable declaration syntax —
+    initiated by one question: <em>can you initialise multiple variables the way Rust does?</em>
+    Seven versions, four compiler errors, one accidental discovery about function shadowing,
+    and the first real Valgrind run. Every corner explained.
+  </p>
+
+  <div class="concepts">
+    <span class="concept">declaration syntax</span>
+    <span class="concept">declaration lists</span>
+    <span class="concept">initialisation</span>
+    <span class="concept">uninitialised variables</span>
+    <span class="concept">undefined behavior</span>
+    <span class="concept">stack memory</span>
+    <span class="concept">preprocessor</span>
+    <span class="concept">implicit function declaration</span>
+    <span class="concept">function shadowing</span>
+    <span class="concept">linker symbol resolution</span>
+    <span class="concept">valgrind memcheck</span>
+    <span class="concept">clang diagnostics</span>
+  </div>
+
+  <!-- ── EXPERIMENT MAP ─────────────────────────────────────── -->
+  <div class="versions-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); margin-bottom:32px;">
+
+    <div class="version-card fail">
+      <div class="vc-label">error</div>
+      <div class="vc-file">declarationv1.c</div>
+      <div class="vc-desc"><code>int u,z = 300,400</code> — tried Python/Rust-style value list. Clang rejected it with two errors.</div>
+    </div>
+
+    <div class="version-card fail">
+      <div class="vc-label">error</div>
+      <div class="vc-file">declarationv2.c</div>
+      <div class="vc-desc"><code>int u,z = 300,200;;</code> — added a semicolon following LSP suggestion. Same errors. Confirmed the comma is not a value separator.</div>
+    </div>
+
+    <div class="version-card fail">
+      <div class="vc-label">wrong assumption</div>
+      <div class="vc-file">declarationv3.c</div>
+      <div class="vc-desc"><code>int u,z = 300</code> — expected both to be 300. Output: <code>u=0, z=300</code>. u was uninitialised, not "defaulted".</div>
+    </div>
+
+    <div class="version-card ok">
+      <div class="vc-label">working</div>
+      <div class="vc-file">declarationv4.c</div>
+      <div class="vc-desc">Separate <code>int x = val</code> per line. Clean compile, correct output. Identified the verbosity trade-off.</div>
+    </div>
+
+    <div class="version-card ok">
+      <div class="vc-label">working</div>
+      <div class="vc-file">declarationv5.c</div>
+      <div class="vc-desc">Everything collapsed to one line. Proved whitespace is irrelevant to the compiler. First deep note on <code>#include</code>.</div>
+    </div>
+
+    <div class="version-card fail">
+      <div class="vc-label">intentional error</div>
+      <div class="vc-file">declarationv6.c</div>
+      <div class="vc-desc"><code>#include &lt;stdio.h&gt;</code> commented out. Confirmed printf becomes undeclared. Proved the preprocessor is not optional.</div>
+    </div>
+
+    <div class="version-card ok" style="border-top-color: var(--accent);">
+      <div class="vc-label" style="color:var(--accent)">key discovery</div>
+      <div class="vc-file">declarationv7.c</div>
+      <div class="vc-desc">Defined a stub <code>int printf() {return 0;}</code> instead. Compiled with warnings. Ran. Printed nothing. Valgrind: zero errors. Function shadowing discovered.</div>
+    </div>
+
+  </div>
+
+  <hr class="sd">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       V1
+  ══════════════════════════════════════════════════════════════ -->
+
+  <div class="discovery warn">
+    <div class="disc-label">Error 1 → errors/declarationv1.c.error</div>
+    <h3>int u,z = 300,400 — the value-list syntax does not exist in C</h3>
+
+    <div class="term" style="margin-top:12px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">declarationv1.c — exact source</span>
+      </div>
+      <div class="term-body"><pre><span class="key">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+    <span class="key">int</span> v = <span class="val">100</span>;
+    <span class="err">int u,z = 300,400;</span>  <span class="cmt">// guess this syntax is not valid, the LSP spotted it.</span>
+                         <span class="cmt">// But let it be an error.</span>
+    printf(<span class="str">"%d\t%d\t%d\n"</span>, v, u, z);
+}</pre></div>
+    </div>
+
+    <div class="term" style="margin-top:8px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">clang output — exact (you used clang here, not gcc)</span>
+      </div>
+      <div class="term-body"><pre><span class="out">clang declarationv1.c -o declarationv1</span>
+<span class="err">declarationv1.c:7:19: error: expected identifier or '('</span>
+<span class="out">    7 |     int u,z = 300,400;</span>
+<span class="out">      |                   ^</span>
+<span class="err">declarationv1.c:7:19: error: expected ';' at end of declaration</span>
+<span class="out">    7 |     int u,z = 300,400;</span>
+<span class="out">      |                   ^</span>
+<span class="out">      |                   ;  -- here? What is this telling?</span>
+<span class="out">2 errors generated.</span>
+
+<span class="cmt">// your note: "Ah, wait, it is asking me to insert a semicolon and the error is resolved?"</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>// Deep Explanation — why this failed and what clang was really telling you</h4>
+
+    <p><strong>What you were attempting:</strong> You wanted the equivalent of Rust's <code>let (u, z) = (300, 400);</code> or Python's <code>u, z = 300, 400</code>. In both those languages, the comma on the left and right sides form a <em>tuple/destructuring assignment</em> — a language feature that maps values positionally. C has no such feature. C's declaration grammar is fundamentally different.</p>
+
+    <p><strong>How the C declaration grammar actually works:</strong> In C, a declaration has the form <code>type declarator-list ;</code>. The declarator-list is a comma-separated sequence of individual declarators, where each declarator is either a bare name (<code>u</code>) or a name with an initialiser (<code>z = 300</code>). The grammar is: <code>int name1, name2 = val2, name3 = val3;</code>. Each initialiser belongs exclusively to the name it immediately follows. There is no provision anywhere in the C grammar for a second comma-separated list of values on the right-hand side.</p>
+
+    <p><strong>What the parser actually did when it hit your line:</strong> The C parser is a state machine. It read <code>int</code> and entered declaration mode. It read <code>u</code> — valid declarator, no initialiser. It read <code>,</code> — separator, expect another declarator. It read <code>z</code> — valid declarator. It read <code>=</code> — initialiser follows. It read <code>300</code> — valid integer literal, initialiser for z complete. Then it read <code>,</code> — at this point the parser expected either another declarator name (an identifier) or a semicolon to end the declaration. It got <code>400</code> — a number, which cannot be a declarator name. That is the exact source of <code>"expected identifier or '('"</code>. The <code>'('</code> in that message refers to function declarator syntax like <code>int foo()</code>.</p>
+
+    <p><strong>Why the second error says "expected ';' at end of declaration":</strong> Once the parser failed at column 19, it attempted error recovery. It looked at what it had so far (<code>int u, z = 300</code>) and suggested that if you placed a semicolon right there — ending the declaration at that point — the line up to that position would be syntactically valid. The <code>,400;</code> that follows would then be a comma expression statement, which is valid C even if useless. So the suggestion was technically correct but not what you wanted at all.</p>
+
+    <p><strong>Your inference from this:</strong> "We are allowed to declare the variable as well as initialise it at the same time." — Yes, and this is important. C has always supported <em>declaration with initialisation</em> as a single statement. This is different from Rust's <code>let</code> in that C does not require a keyword — just <code>type name = value;</code>. The syntax you were looking for that actually works is <code>int u = 300, z = 400;</code> — one <code>int</code>, two declarators, each with their own initialiser.</p>
+  </div>
+
+  <hr class="sd">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       V2
+  ══════════════════════════════════════════════════════════════ -->
+
+  <div class="discovery warn">
+    <div class="disc-label">Error 2 → errors/declarationv2.c.error</div>
+    <h3>int u,z = 300,200;; — the semicolon did not help, and it confirmed something important</h3>
+
+    <div class="term" style="margin-top:12px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">declarationv2.c — exact source</span>
+      </div>
+      <div class="term-body"><pre><span class="key">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+    <span class="key">int</span> v = <span class="val">100</span>;
+    <span class="err">int u,z = 300,200;;</span>  <span class="cmt">// added semicolon after LSP instruction...</span>
+                           <span class="cmt">// let's check this, what happens?</span>
+    printf(<span class="str">"%d\t%d\t%d\n"</span>, v, u, z);
+}</pre></div>
+    </div>
+
+    <div class="term" style="margin-top:8px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">clang output — exact</span>
+      </div>
+      <div class="term-body"><pre><span class="out">clang declarationv2.c -o declarationv2</span>
+<span class="err">declarationv2.c:7:19: error: expected identifier or '('</span>
+<span class="out">    7 |     int u,z = 300,200;;</span>
+<span class="out">      |                   ^</span>
+<span class="err">declarationv2.c:7:19: error: expected ';' at end of declaration</span>
+<span class="out">    7 |     int u,z = 300,200;;</span>
+<span class="out">      |                   ^</span>
+<span class="out">      |                   ;</span>
+<span class="out">2 errors generated.</span>
+
+<span class="cmt">// your inference: "This means we cannot assign like Python or Rust does.</span>
+<span class="cmt">// But also: u,z = 300 → we are allowed to assign multiple variables the same value."</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>// Deep Explanation — why the semicolon changed nothing and what your inference got right and wrong</h4>
+
+    <p><strong>Why the semicolon did not fix it:</strong> The error occurs at column 19 — the position of the <code>,</code> after <code>300</code>. This is inside the declaration, before any semicolon you could add at the end. The parser fails at that comma regardless of what follows it. Adding a second <code>;</code> at the end of the line only added a second empty statement after the first — it did not move the parse failure point.</p>
+
+    <p><strong>Your inference "u,z = 300 → we can assign multiple variables the same value":</strong> This inference was actually wrong, and v3 proved it. <code>int u,z = 300</code> does not assign 300 to both. The <code>= 300</code> binds only to <code>z</code>. In C there is no multi-target initialiser. The way to assign the same value to multiple variables at declaration is: <code>int u = 300, z = 300;</code> — explicitly writing the value for each. The only context where you can assign the same value to multiple variables in a single statement in C is using assignment chaining: <code>u = z = 300;</code> — but this only works as an assignment expression, not inside a declaration.</p>
+
+    <p><strong>What clang's diagnostic system was doing across v1 and v2:</strong> Clang's error messages are designed to be precise about location. The caret <code>^</code> points to the exact token that caused the failure. The suggested fix (the <code>;</code> hint with the pipe character) is clang's <em>FixIt</em> system — it proposes an edit that would make the code syntactically valid from that point forward, even if the result is not semantically what you intended. FixIt suggestions are useful for typos and simple mistakes, but they can mislead when the underlying intent is architecturally incompatible with the grammar.</p>
+  </div>
+
+  <hr class="sd">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       V3
+  ══════════════════════════════════════════════════════════════ -->
+
+  <div class="discovery warn">
+    <div class="disc-label">Error 3 → errors/declarationv3.c.error — Wrong Assumption + Real Danger</div>
+    <h3>int u,z = 300 — u printed 0, but it was not "defaulted". It was undefined behavior.</h3>
+
+    <div class="term" style="margin-top:12px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">declarationv3.c — exact source</span>
+      </div>
+      <div class="term-body"><pre><span class="key">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+    <span class="key">int</span> v = <span class="val">100</span>;
+    <span class="key">int</span> u, z = <span class="val">300</span>;  <span class="cmt">// added semicolon after LSP instruction...</span>
+    printf(<span class="str">"%d\t%d\t%d\n"</span>, v, u, z);
+}</pre></div>
+    </div>
+
+    <div class="term" style="margin-top:8px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">actual output</span>
+      </div>
+      <div class="term-body"><pre><span class="out">100    0    300</span>
+
+<span class="cmt">// your note: "int u,z = 300 defaults to u = 0, z = 300. Why is that so? whats the matter?"</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>// Deep Explanation — uninitialised variables, the stack, and undefined behavior</h4>
+
+    <p><strong>Why only z got 300:</strong> <code>int u, z = 300</code> is parsed as a declaration list with two declarators: <code>u</code> with no initialiser, and <code>z</code> with initialiser <code>300</code>. In C grammar, an initialiser belongs to the declarator it immediately follows. There is no shared or broadcast initialiser. The compiler allocates stack space for both <code>u</code> and <code>z</code>, writes 300 into z's slot, and leaves u's slot untouched.</p>
+
+    <p><strong>u did not "default to 0" — this is the critical correction:</strong> The C standard is explicit: reading an uninitialised automatic (stack) variable is <em>undefined behavior</em>. The standard literally says the program can do anything — produce any output, crash, corrupt data, or behave inconsistently across runs. On your machine, at that moment, the bytes at u's stack address happened to be zero — because the operating system zero-fills new pages before giving them to a process (a security measure to prevent one process reading another's memory). But this is an OS implementation detail, not a C language guarantee. On the second call of main, or after any function call that leaves non-zero bytes on the stack, those bytes would be different.</p>
+
+    <p><strong>What the stack actually looks like at that moment:</strong></p>
+    <div class="memory-diagram">
+      <pre><span class="mlabel">stack frame for main() after "int u, z = 300" executes:</span>
+
+<span class="mlabel">address</span>    <span class="mlabel">name</span>   <span class="mlabel">contents</span>       <span class="mlabel">notes</span>
+<span class="out">0x...ffa0</span>  <span class="mval">v</span>      <span class="mval">0x00000064</span>     <span class="mlabel">← 100 decimal, set by "int v = 100"</span>
+<span class="out">0x...ffa4</span>  <span class="munknown">u</span>      <span class="munknown">0x????????</span>     <span class="mlabel">← UNINITIALISED — whatever was here before</span>
+<span class="out">0x...ffa8</span>  <span class="mval">z</span>      <span class="mval">0x0000012c</span>     <span class="mlabel">← 300 decimal, set by "= 300"</span>
+
+<span class="mlabel">printf reads u's slot and prints its contents as %d.</span>
+<span class="mlabel">You saw 0. A different run could show any 32-bit integer.</span></pre>
+    </div>
+
+    <p><strong>Why it happened to be 0 on your run:</strong> The Linux kernel zero-fills all memory pages before mapping them to a process (syscall <code>mmap</code> with <code>MAP_ANONYMOUS</code> sets pages to zero). Your program's stack lives on pages that were freshly allocated at process start and had not yet been written to by any function call above main in the call chain. The C runtime startup code (<code>crt1.o</code>) that calls main does use some stack, but on x86_64 it had not written to the particular 4-byte slot that became <code>u</code> at your stack pointer offset. Different programs, different compilers, different systems, different results.</p>
+
+    <p><strong>The threats this creates in real code:</strong> Uninitialised variables are one of the most common sources of security vulnerabilities in C programs. If a security-sensitive value (a permission flag, a buffer length, a pointer) is read before being written, an attacker who can influence the stack layout — through crafted input that controls stack usage in prior function calls — can control what value gets read. This class of bug has been the root cause of real CVEs in production systems.</p>
+
+    <p><strong>How to catch this:</strong> Compile with <code>-Wall</code> — gcc will warn <code>warning: 'u' is used uninitialized</code> in simple cases. For cases the compiler misses, compile with <code>-fsanitize=undefined</code> and the UBSan runtime will catch the read and print a detailed report. Valgrind's Memcheck tool with <code>--track-origins=yes</code> will also detect it and trace the uninitialised value back to its source. The simplest defence is a standing rule: <strong>every local variable is initialised at the point of declaration, always.</strong> <code>int u = 0;</code> costs exactly zero runtime overhead on any modern compiler — it becomes a single <code>mov</code> instruction.</p>
+  </div>
+
+  <hr class="sd">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       V4
+  ══════════════════════════════════════════════════════════════ -->
+
+  <div class="discovery ok">
+    <div class="disc-label">Working → declarationv4.c</div>
+    <h3>Separate int x = val per line — correct, clean, verbose</h3>
+
+    <div class="term" style="margin-top:12px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">declarationv4.c — exact source</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <div class="term-body"><pre><span class="cmt">// let me try initialising C variables in rust way, will it work?</span>
+<span class="cmt">// the K and R does not mention this.</span>
+
+<span class="key">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+    <span class="key">int</span> v = <span class="val">100</span>;
+    <span class="key">int</span> u = <span class="val">300</span>; <span class="cmt">// After going through the tedious process of variable</span>
+    <span class="key">int</span> z = <span class="val">200</span>; <span class="cmt">// declaration I realised a fact.</span>
+    printf(<span class="str">"%d\t%d\t%d\n"</span>, v, u, z);
+}
+
+<span class="cmt">// is there a good way to declare variables?</span>
+<span class="cmt">// int v, u, z; v = 100; u = 300; z = 200; → valid? Going to check in v5.</span>
+<span class="cmt">// using int 3 times = 3 extra keywords. Huh.</span></pre></div>
+    </div>
+
+    <div class="term" style="margin-top:8px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">output</span>
+      </div>
+      <div class="term-body"><pre><span class="out">100    300    200</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>// Deep Explanation — the three valid declaration forms and the trade-offs between them</h4>
+
+    <p><strong>All three forms that do what you wanted, and when to use each:</strong></p>
+
+    <div class="memory-diagram">
+      <pre><span class="cmt">// Form 1 — one declaration per line (what v4 does)</span>
+<span class="key">int</span> v = <span class="val">100</span>;
+<span class="key">int</span> u = <span class="val">300</span>;
+<span class="key">int</span> z = <span class="val">200</span>;
+<span class="mlabel">→ most readable. each variable's intent is on its own line.</span>
+<span class="mlabel">  preferred by Linux kernel style, LLVM style, most modern guides.</span>
+
+<span class="cmt">// Form 2 — declaration list with individual initialisers (the C idiom)</span>
+<span class="key">int</span> v = <span class="val">100</span>, u = <span class="val">300</span>, z = <span class="val">200</span>;
+<span class="mlabel">→ concise. all three are guaranteed initialised.</span>
+<span class="mlabel">  used in K&amp;R throughout. valid and clean.</span>
+<span class="mlabel">  this is what you were trying to write in v1 and v2.</span>
+
+<span class="cmt">// Form 3 — declare first, assign later</span>
+<span class="key">int</span> v, u, z;
+v = <span class="val">100</span>;  u = <span class="val">300</span>;  z = <span class="val">200</span>;
+<span class="mlabel">→ only use when initial values come from computation.</span>
+<span class="mlabel">  dangerous because there is a window between declaration</span>
+<span class="mlabel">  and assignment where the variables are uninitialised.</span></pre>
+    </div>
+
+    <p><strong>Your observation about typing <code>int</code> three times:</strong> It is a real trade-off, and it is the reason C programmers often prefer Form 2 for related variables. The extra keystrokes in Form 1 buy you something important though: each line is a complete, self-contained statement. When you are reading code months later or debugging, being able to see a variable and its initial value on a single line without scanning a comma-separated list is valuable. Form 1 also makes it trivial to add a comment explaining why a specific variable has a specific initial value — something much harder to do cleanly in Form 2.</p>
+
+    <p><strong>What the compiler generates for all three forms is identical:</strong> Three <code>mov</code> instructions writing the constants 100, 300, and 200 to their respective stack offsets. The compiler does not care which form you use — the object code is byte-for-byte the same. This is a pure readability and maintenance decision.</p>
+  </div>
+
+  <hr class="sd">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       V5
+  ══════════════════════════════════════════════════════════════ -->
+
+  <div class="discovery ok">
+    <div class="disc-label">Working → declarationv5.c</div>
+    <h3>Everything collapsed to one line — valid C, and the first deep note on #include</h3>
+
+    <div class="term" style="margin-top:12px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">declarationv5.c — exact source</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <div class="term-body"><pre><span class="key">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+<span class="cmt">// What is the purpose of this include? This is a C preprocessor directive,</span>
+<span class="cmt">// which copies the contents of stdio.h from the default lib location into</span>
+<span class="cmt">// this file in static memory during compilation.</span>
+<span class="cmt">// &lt;&gt; = search system include paths first.</span>
+<span class="cmt">// "" = search current directory first, then system paths.</span>
+<span class="cmt">// What happens without this? Check in v6.</span>
+
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) { <span class="key">int</span> v = <span class="val">100</span>; <span class="key">int</span> u = <span class="val">300</span>; <span class="key">int</span> z = <span class="val">200</span>; printf(<span class="str">"%d\t%d\t%d\n"</span>, v, u, z); }
+
+<span class="cmt">// Ah, the valid and ugly syntax. I mean this is not a syntax anymore.</span>
+<span class="cmt">// Just raw instructions separated inside a function by `;`</span>
+<span class="cmt">// just like precious bash scripts. C is essentially a bash script! (just kidding.)</span>
+<span class="cmt">// But tbh, even bash has a syntax, but here this seems something easy?</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>// Deep Explanation — why C ignores whitespace, what #include actually does, and the bash comparison</h4>
+
+    <p><strong>Why v4 and v5 produce identical object code:</strong> The C compiler's first pass is the <em>lexer</em> — it reads the raw character stream and converts it into a sequence of tokens: keywords (<code>int</code>, <code>return</code>), identifiers (<code>main</code>, <code>printf</code>), literals (<code>100</code>), operators (<code>=</code>), and punctuation (<code>{</code>, <code>;</code>, <code>}</code>). Whitespace characters — spaces, tabs, newlines — are used only as token separators when needed to prevent two adjacent tokens from merging (<code>int v</code> must have a space so it is not lexed as the identifier <code>intv</code>). Beyond that, all whitespace is discarded. The parser never sees it. The compiler produces the same AST (abstract syntax tree) from both versions, and therefore the same machine code.</p>
+
+    <p><strong>Your note on <code>#include</code> was accurate and precise:</strong> The preprocessor runs before the compiler. It opens <code>/usr/include/stdio.h</code> and performs a textual substitution — inserting the entire file content at the location of the <code>#include</code> directive. The result is a single expanded source file that is then handed to the compiler. The difference between <code>&lt;&gt;</code> and <code>""</code> is exactly as you described: angle brackets tell the preprocessor to search only in the system include directories (<code>/usr/include</code>, <code>/usr/local/include</code>, and paths passed via <code>-I</code>). Quotes tell it to look in the directory containing the current file first, then fall back to the system paths. You would use quotes for your own header files: <code>#include "mylib.h"</code>.</p>
+
+    <p><strong>Your "C is a bash script" observation:</strong> There is genuine structural similarity worth thinking about. Both C and shell use <code>;</code> as a statement terminator and <code>{}</code> as block delimiters. Both were designed in the same era (early 1970s Unix) and share stylistic DNA. The key difference is execution model: a shell script is interpreted line by line at runtime. A C program is compiled to machine code before it ever runs — the CPU executes the binary directly, with no interpreter in the middle. The one-liner formatting looks like shell, but what gets executed is completely different: machine instructions, not text processing.</p>
+  </div>
+
+  <hr class="sd">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       V6
+  ══════════════════════════════════════════════════════════════ -->
+
+  <div class="discovery warn">
+    <div class="disc-label">Intentional Error → errors/declarationv6.c.error</div>
+    <h3>#include commented out — printf is undeclared. The preprocessor is not optional.</h3>
+
+    <div class="term" style="margin-top:12px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">declarationv6.c — exact source</span>
+      </div>
+      <div class="term-body"><pre><span class="cmt">// #include &lt;stdio.h&gt;   ← intentionally commented out</span>
+<span class="cmt">// What happens without this preprocessor include?</span>
+<span class="cmt">// Will printf not be available? Check in v6.</span>
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) { <span class="key">int</span> v = <span class="val">100</span>; <span class="key">int</span> u = <span class="val">300</span>; <span class="key">int</span> z = <span class="val">200</span>; <span class="err">printf</span>(<span class="str">"%d\t%d\t%d\n"</span>, v, u, z); }</pre></div>
+    </div>
+
+    <div class="term" style="margin-top:8px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">clang output — exact</span>
+      </div>
+      <div class="term-body"><pre><span class="err">declarationv6.c:7:57: error: call to undeclared library function 'printf'</span>
+<span class="err">      with type 'int (const char *, ...)'; ISO C99 and later do not</span>
+<span class="err">      support implicit function declarations [-Wimplicit-function-declaration]</span>
+<span class="out">    7 | int main(void) { ... printf("%d\t%d\t%d\n", v, u, z); }</span>
+<span class="out">      |                       ^</span>
+<span class="out">note: include the header &lt;stdio.h&gt; or explicitly provide a declaration for 'printf'</span>
+<span class="out">1 error generated.</span>
+
+<span class="cmt">// your note: "attempt to call undeclared library function.</span>
+<span class="cmt">// Or we should at least declare the function. Then let me declare that empty function."</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>// Deep Explanation — what #include copies, what the compiler actually needs, and the history of implicit declarations</h4>
+
+    <p><strong>What stdio.h actually contains:</strong> It is not magic. Open it yourself: <code>cat /usr/include/stdio.h</code>. You will find — among other things — a line roughly like: <code>extern int printf(const char *__restrict __format, ...) __attribute__((__format__(__printf__, 1, 2)));</code>. This is a <em>function declaration</em> — it tells the compiler: printf is a function that accepts a const char pointer and a variable number of additional arguments, and returns an int. The compiler needs this to type-check your call, to verify the number and types of arguments, and to know how to set up the call on the stack/in registers. The actual implementation of printf — the code that does the formatting and writes to stdout — lives in <code>libc.so.6</code> on your system, linked in by the linker at the end. The header is just the declaration. The library is the implementation.</p>
+
+    <p><strong>Why ISO C99 removed implicit function declarations:</strong> In original K&amp;R C (1978) and C89, calling an undeclared function was legal. The compiler would implicitly assume the function returned <code>int</code> and accepted whatever arguments you passed. This caused two classes of silent bugs. First: if the function actually returned a pointer (64-bit on x86_64), but the compiler assumed int (32-bit), the 64-bit return value was silently truncated — the upper 32 bits lost. Dereferencing that truncated pointer would crash or corrupt memory. Second: with no prototype, the compiler could not check argument types or count, so passing the wrong number of arguments of the wrong types was silently accepted and produced undefined behavior at runtime. C99 made implicit function declarations a hard error. Clang inherits this. The flag <code>-Wimplicit-function-declaration</code> in the error message names the category of diagnostic.</p>
+
+    <p><strong>The compiler's note: "include the header or explicitly provide a declaration":</strong> This is precisely the two-path fork you took. The first path — include the header — is what every normal program does. The second path — explicitly provide a declaration — is what you tried in v7, and it opened up something interesting.</p>
+  </div>
+
+  <hr class="sd">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       V7 — KEY DISCOVERY
+  ══════════════════════════════════════════════════════════════ -->
+
+  <div class="discovery info">
+    <div class="disc-label">Key Discovery → declarationv7.c — Function Shadowing + First Valgrind Run</div>
+    <h3>Defining a stub printf() — compiled with warnings, ran, printed nothing, Valgrind reported zero errors</h3>
+
+    <div class="term" style="margin-top:12px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">declarationv7.c — exact source</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <div class="term-body"><pre><span class="cmt">// #include &lt;stdio.h&gt;   ← intentionally commented out</span>
+<span class="key">int</span> <span class="val">printf</span>() { <span class="key">return</span> <span class="val">0</span>; }
+<span class="cmt">// What happens without the preprocessor include?</span>
+<span class="cmt">// Will printf not be available? Check in v6.</span>
+<span class="cmt">// Answer from v6: errors. So let me declare that empty function instead.</span>
+
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) { <span class="key">int</span> v = <span class="val">100</span>; <span class="key">int</span> u = <span class="val">300</span>; <span class="key">int</span> z = <span class="val">200</span>; printf(<span class="str">"%d\t%d\t%d\n"</span>, v, u, z); }</pre></div>
+    </div>
+
+    <div class="term" style="margin-top:8px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">gcc -Wall -Wextra -Wpedantic -std=c11 warnings</span>
+      </div>
+      <div class="term-body"><pre><span class="out">declarationv7.c:4:5: warning: conflicting types for built-in function 'printf';</span>
+<span class="out">      expected 'int(const char *, ...)' [-Wbuiltin-declaration-mismatch]</span>
+<span class="out">    4 | int printf() {return 0;}</span>
+<span class="out">      |     ^~~~~~</span>
+<span class="out">declarationv7.c:4:5: note: 'printf' is declared in header '&lt;stdio.h&gt;'</span>
+<span class="out">declarationv7.c:4:5: warning: number of arguments doesn't match built-in prototype</span>
+<span class="out">    4 | int printf() {return 0;}</span>
+<span class="out">      |     ^~~~~~</span>
+<span class="cmt">// compiled despite warnings. binary produced. ran. printed nothing. exit 0.</span></pre></div>
+    </div>
+
+    <div class="term" style="margin-top:8px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">declarationv7.valgrind.output — both runs, exact</span>
+      </div>
+      <div class="term-body"><pre><span class="cmt">// run 1: valgrind --leak-check=full ./declarationv7</span>
+<span class="out">==18167== Memcheck, a memory error detector</span>
+<span class="out">==18167== Using Valgrind-3.25.1 and LibVEX; rerun with -h for copyright info</span>
+<span class="out">==18167== Command: ./declarationv7</span>
+<span class="out">==18167==</span>
+<span class="out">==18167== HEAP SUMMARY:</span>
+<span class="out">==18167==     in use at exit: 0 bytes in 0 blocks</span>
+<span class="out">==18167==   total heap usage: 0 allocs, 0 frees, 0 bytes allocated</span>
+<span class="out">==18167==</span>
+<span class="out">==18167== All heap blocks were freed -- no leaks are possible</span>
+<span class="out">==18167==</span>
+<span class="out">==18167== For lists of detected and suppressed errors, rerun with: -s</span>
+<span class="out">==18167== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)</span>
+
+<span class="cmt">// run 2: valgrind --show-error-list=all --leak-check=full ./declarationv7</span>
+<span class="out">==18222== HEAP SUMMARY:</span>
+<span class="out">==18222==     in use at exit: 0 bytes in 0 blocks</span>
+<span class="out">==18222==   total heap usage: 0 allocs, 0 frees, 0 bytes allocated</span>
+<span class="out">==18222==</span>
+<span class="out">==18222== All heap blocks were freed -- no leaks are possible</span>
+<span class="out">==18222== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>// Deep Explanation Part 1 — what the gcc warnings mean, line by line</h4>
+
+    <p><strong><code>-Wbuiltin-declaration-mismatch</code>:</strong> gcc has built-in knowledge of certain standard library functions — particularly <code>printf</code>, <code>malloc</code>, <code>memcpy</code>, and others. This built-in knowledge is used for optimisation: gcc can replace a simple <code>printf("hello\n")</code> with a direct call to <code>puts("hello")</code> (which is faster), or inline a small <code>memcpy</code> as a few register moves. To do these transformations safely, gcc must verify that the function being called actually matches its expected signature. When gcc sees your <code>int printf() { return 0; }</code>, it compares your declaration against its internal prototype — <code>int printf(const char *format, ...)</code> — and finds a mismatch. Your function takes no arguments and the real one takes a variadic list. Hence the warning.</p>
+
+    <p><strong><code>number of arguments doesn't match built-in prototype</code>:</strong> This is a more specific elaboration of the same mismatch. Your <code>int printf()</code> uses the old C syntax of unspecified arguments (which means "I accept any number of arguments of any type" — not "I accept no arguments"). The real printf is declared as variadic with <code>...</code>. gcc flags this because its optimisations for printf depend on the exact prototype being correct.</p>
+
+    <p><strong>Why gcc warned but still compiled:</strong> These are warnings, not errors. A warning means "this is probably wrong and you should look at it," not "I refuse to continue." The code is syntactically valid C. Declaring a function named <code>printf</code> with your own implementation is legal in C. gcc notes the mismatch and moves on. To make all warnings into errors — which you should do in production — add <code>-Werror</code> to your compile flags. Then this would have stopped the build.</p>
+
+    <h4>// Deep Explanation Part 2 — what actually happened at runtime (function shadowing)</h4>
+
+    <p><strong>Your stub was called instead of the real printf:</strong> When the compiler processed the call <code>printf("%d\t%d\t%d\n", v, u, z)</code> in main, it looked up the name <code>printf</code> and found your definition in the same translation unit (your .c file). It generated a call to your function. Your function returned 0 and did nothing else. No output was produced. The program exited with status 0.</p>
+
+    <p><strong>How the linker handles symbol conflicts:</strong> When the linker combines your object file with the C standard library (<code>libc.so.6</code>), it uses a simple rule: the first definition wins. Your object file is processed before the library. Your <code>printf</code> symbol is found first. The linker uses it. The real <code>printf</code> in libc is never referenced. This is called <em>function shadowing</em> or <em>symbol interposition</em>, and it is a deliberate and powerful mechanism in the C toolchain.</p>
+
+    <p><strong>Real-world uses of function shadowing:</strong> This is not a footgun — it is a tool. Unit testing frameworks use it to mock system calls: define your own <code>malloc</code> that tracks allocations, your own <code>open</code> that returns a fake file descriptor. Memory allocator replacement works the same way — the <code>jemalloc</code> and <code>tcmalloc</code> libraries replace the system malloc by defining their own symbols with the same names. Security researchers use it to audit programs by interposing on library calls. On Linux, <code>LD_PRELOAD</code> lets you do this without recompiling — you load a shared library whose symbols take precedence over libc at runtime.</p>
+
+    <p><strong>The threat in your specific case:</strong> If you had accidentally defined a stub for <code>malloc</code> or <code>free</code> instead of printf, your program would silently use the stub — never allocating real memory, returning NULL or garbage for every allocation, and crashing in hard-to-diagnose ways. The compiler warning was your only protection. This is why <code>-Wall -Wextra</code> must always be on. The warning about the built-in prototype mismatch was precisely the signal that you had shadowed a known function.</p>
+
+    <h4>// Deep Explanation Part 3 — reading the Valgrind output in full detail</h4>
+
+    <p><strong>The PID prefix <code>==18167==</code>:</strong> Every line of Valgrind output is prefixed with the process ID of the program being analysed, enclosed in double equals signs. This lets you separate Valgrind's output from your program's stdout when both are being written to the terminal simultaneously. In your output, both runs show different PIDs (18167 and 18222) because each <code>./declarationv7</code> invocation creates a new process.</p>
+
+    <p><strong><code>Memcheck, a memory error detector</code>:</strong> Valgrind is not a single tool — it is a framework. Memcheck is the default tool (selected by <code>--tool=memcheck</code>, which is the default when you omit <code>--tool</code>). Memcheck instruments every memory read and write in your program, tracking which bytes have been allocated, freed, initialised, and accessed. It runs your program inside a virtual machine — which is why Valgrind-instrumented programs run 10–50x slower than native execution.</p>
+
+    <p><strong><code>Using Valgrind-3.25.1 and LibVEX</code>:</strong> LibVEX is Valgrind's IR (intermediate representation) compiler. It translates your program's machine code into VEX IR — a portable intermediate language — instruments it with memory checks, then re-compiles it to machine code for execution. This is how Valgrind intercepts every memory operation without modifying your source code.</p>
+
+    <p><strong><code>HEAP SUMMARY: in use at exit: 0 bytes in 0 blocks</code>:</strong> At the moment your program exited (returned from main and the C runtime called <code>_exit()</code>), Valgrind found zero bytes allocated on the heap and not yet freed. "In use at exit" means currently allocated — memory that was allocated with malloc/calloc/realloc and not yet freed. Zero here means either your program never used the heap, or everything it allocated was freed before exit. In your case: your stub printf does nothing, which means libc's stdio never initialised its internal buffers (which are heap-allocated). No heap usage at all.</p>
+
+    <p><strong><code>total heap usage: 0 allocs, 0 frees, 0 bytes allocated</code>:</strong> The lifetime total across the entire run. Zero allocations, zero frees. This confirms that your stub printf prevented any libc stdio activity — the real printf would have triggered at minimum one <code>malloc</code> call to set up the stdio buffer on first use. The fact that this shows zero is itself a diagnostic: it tells you your stub successfully intercepted the call.</p>
+
+    <p><strong><code>All heap blocks were freed -- no leaks are possible</code>:</strong> A clean bill of health. Since there were zero allocations, there cannot be any leaks. This line would change to a detailed leak report if any malloc'd memory was not freed before exit.</p>
+
+    <p><strong><code>For lists of detected and suppressed errors, rerun with: -s</code>:</strong> Valgrind has a suppression system — certain known benign issues in system libraries (particularly libc and the dynamic linker) are pre-suppressed so they do not pollute your output. The <code>-s</code> flag shows you what was suppressed. In production debugging you would check this to ensure nothing important is being hidden.</p>
+
+    <p><strong><code>ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)</code>:</strong> The final verdict. Zero memory errors detected in zero distinct code locations (contexts). The second set of zeros — <code>suppressed: 0 from 0</code> — means Valgrind did not suppress anything either. A truly clean run. Your second invocation with <code>--show-error-list=all</code> added that flag to also display any suppressed errors — and still got zero, confirming the result.</p>
+
+    <p><strong>Why Valgrind reported perfectly clean results for a broken program:</strong> This is the important lesson. Valgrind reported zero errors because your stub printf genuinely produced no memory errors — it allocated nothing, freed nothing, and accessed no invalid memory. But the program was still wrong: it printed nothing when it should have printed three numbers. Valgrind measures memory safety, not program correctness. A program that does nothing has no memory errors — but it also does nothing. Valgrind clean does not mean the program is correct. It means the program has no memory-safety violations.</p>
+  </div>
+
+  <hr class="sd">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       CONCLUSIONS
+  ══════════════════════════════════════════════════════════════ -->
+
+  <div class="discovery info">
+    <div class="disc-label">Conclusions — seven experiments, five things established</div>
+    <h3>What this session proved</h3>
+  </div>
+
+  <table class="vtable">
+    <tr><th>Question</th><th>Answer</th></tr>
+    <tr>
+      <td>Can you initialise multiple variables with a comma-separated value list like <code>int u,z = 300,400</code>?</td>
+      <td style="color:var(--orange)">No. C has no such syntax. The comma separates variable names, not values. The correct form is <code>int u = 300, z = 400;</code></td>
+    </tr>
+    <tr>
+      <td>Does <code>int u,z = 300</code> assign 300 to both u and z?</td>
+      <td style="color:var(--orange)">No. Only z gets 300. u is uninitialised. Reading it is undefined behavior — the 0 you saw was coincidence, not a language guarantee.</td>
+    </tr>
+    <tr>
+      <td>Does whitespace matter to the C compiler?</td>
+      <td style="color:var(--green)">No. v4 and v5 produce byte-for-byte identical object code. The lexer discards all non-essential whitespace before parsing begins.</td>
+    </tr>
+    <tr>
+      <td>What happens if you remove <code>#include &lt;stdio.h&gt;</code>?</td>
+      <td style="color:var(--orange)">The compiler errors: printf is undeclared. The header provides the function declaration the compiler needs to type-check the call. The implementation lives in libc.</td>
+    </tr>
+    <tr>
+      <td>Can you replace a library function by defining one with the same name?</td>
+      <td style="color:var(--green)">Yes. Your definition shadows the library version. The linker uses your symbol first. Valgrind reported zero errors — because your stub did nothing, including no I/O and no heap activity.</td>
+    </tr>
+  </table>
+
+  <div class="warn-note" style="margin-top:24px">
+    <strong>The one thing to fix going forward:</strong> In v3, your note said u "defaulted to 0." It did not default — it was undefined. The rule from here on is: every local variable is initialised at the point of declaration, every time. <code>int u = 0;</code> costs nothing at runtime — the compiler emits a single <code>mov</code> instruction — and eliminates an entire class of bugs that have caused real security vulnerabilities in production C code. If you do not have a meaningful initial value yet, use 0 or -1 as a sentinel and document why.
+  </div>
+
+</div>
+<!-- END 1.3 -->
 
 </div><!-- .content -->
 
