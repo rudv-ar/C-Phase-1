@@ -430,3 +430,51 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
   .tab  { padding: 12px 14px; font-size: 11px; }
 }
 
+/* ── DEEP EXPLANATION BLOCKS ── */
+.explain {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 20px 24px;
+  margin: 16px 0 24px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.85;
+}
+.explain h4 {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.explain p         { margin-bottom: 10px; }
+.explain p:last-child { margin-bottom: 0; }
+.explain strong    { color: var(--text); }
+.explain em        { color: var(--purple); font-style: normal; }
+
+/* ── MEMORY / STACK DIAGRAMS ── */
+.memory-diagram {
+  background: #080a0f;
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin: 12px 0;
+  overflow-x: auto;
+}
+.memory-diagram pre {
+  font-size: 12px;
+  line-height: 2;
+  white-space: pre;
+  color: var(--muted);
+}
+.mval     { color: var(--green); }
+.mlabel   { color: var(--accent); }
+.munknown { color: var(--orange); }
+
+/* ── SECTION DIVIDER ── */
+hr.sd {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 36px 0;
+}
+
