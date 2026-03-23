@@ -21,3 +21,23 @@ int main(void) {
 Enter a number : 234234
 fish: Job 1, './scanfv3' terminated by signal SIGSEGV (Address boundary error) -> My fish shell terminated this process - is that a segmentation error? SEGV?
 We are not allowed to write there maybe we are writing to that location? (no sure, see the Memory-1, where I will be using objdump -x to get a view of the layout of the memory - not fully explainable, but we can see the structure...)
+
+# Wait, it actually runs for a non integer : string 
+❯ ./scanfv3.e.bin
+Enter a number : sf
+You entered this number groot : 0
+
+## What about a float?
+
+Enter a number : 234.234
+fish: Job 1, './scanfv3.e.bin' terminated by signal SIGSEGV (Address boundary error)
+
+## Probably the same thing is happening. So when we give the input as float, is that actually truncating and taking the value as an integer? 
+
+## Lets try the integer overflow in this code..
+
+❯ ./scanfv3.e.bin
+Enter a number : 82375902837523857023985709847982348234932478324789234789234
+fish: Job 1, './scanfv3.e.bin' terminated by signal SIGSEGV (Address boundary error)
+
+## Nice, the same thing happens here too
