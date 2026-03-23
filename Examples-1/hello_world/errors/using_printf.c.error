@@ -1,0 +1,21 @@
+// printf is a function declared in the standard input output library. But actually it is present in some location : in the standard C library glibc.o 
+// (The above statement has to be checked again!)
+
+// Run this code to get the output of this program as the transision file, just after the preprocessor has completed its functoins.
+// The default preprocessor is the cpp : Not to be misunderstood as c plus plus , but C pre processor
+// gcc -Wextra -Wall -std=c11 -E -o using_printf using_printf.c 
+
+#include <stdio.h>
+
+int main(void) {
+  printf("This is how you need to use this printf function \n\0");
+  // Wait what is this \0 -> This is the null byte.
+}
+
+//using_printf.c: In function ‘main’:
+//using_printf.c:11:62: warning: embedded ‘\0’ in format [-Wformat-contains-nul]
+//   11 |   printf("This is how you need to use this printf function \n\0");
+//     |                                                              ^~
+
+// Why did the compiler warn about ending a printf with a null byte? What is the reason behind that? 
+// This implies there is a memory risk or what? We should not be using this nullbyte at the body of function?

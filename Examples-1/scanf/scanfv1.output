@@ -1,0 +1,52 @@
+❯ ./scanfv1 # normal
+Enter a number : 234
+You entered this number groot : 234
+
+❯ ./scanfv1 # normal
+Enter a number : -234
+You entered this number groot : -234
+
+❯ ./scanfv1 # multiple numbers
+Enter a number : 234 256436 24562
+You entered this number groot : 234
+
+❯ ./scanfv1 # multiple numbers
+Enter a number : -234 -436 -0
+You entered this number groot : -234
+
+❯ ./scanfv1 # Nothing : Nope, just enter did not work, it was not accepting \n and wanted a input to be given for sure
+Enter a number :
+
+
+234
+You entered this number groot : 234
+
+❯ ./scanfv1 # A large positive number
+Enter a number : 290375398759087210985710987
+You entered this number groot : -1
+
+❯ ./scanfv1 # A large negative number
+Enter a number : -2347896587369782134687693876
+You entered this number groot : 0
+
+❯ ./scanfv1 # A non integer : string
+Enter a number : lskadfjalk
+You entered this number groot : 0
+
+❯ ./scanfv1 # A non integer : string
+Enter a number : -kjafda
+You entered this number groot : 0
+
+❯ ./scanfv1 # A non integer : float?
+Enter a number : 234.234
+You entered this number groot : 234
+
+❯ ./scanfv1 # A non integer : float?
+Enter a number : 0324.2342
+You entered this number groot : 324
+
+❯ ./scanfv1 # A non integer : -float?
+Enter a number : -23049.23452352
+You entered this number groot : -23049
+
+

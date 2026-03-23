@@ -1,0 +1,15 @@
+// hello world
+// include std input output libraray
+
+//#include <stdio.h> 
+#include<stdio.h> 
+
+// declare the main function. It is advisable that the main function is not like this :
+int main(void) {
+  printf("Hello World Again!\n");
+  return 0;
+  // This implies that this function takes zero arguments, returns nothing
+}
+
+// Ah, wait. The return type of main is not int? Why is the LSP complianing about it? This is because we can use "$?" in shell scripts, or use the available functions in C to check if the funciton succeded successfully or not. Any non zero return type impiles error. So we have to return something , default a zero.
+//

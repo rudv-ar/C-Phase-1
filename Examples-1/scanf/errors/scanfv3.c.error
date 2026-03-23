@@ -1,0 +1,23 @@
+// We are goint to get user input ! Interesting.
+// scanf : this is a functoin that is found in the standard input ouput lib. Users can provide NON SPACE SEPERATED INPUT. 
+
+#include <stdio.h> 
+
+int main(void) {
+
+  int a;
+
+  printf("Enter a number : "); // I am not using \n for purpose of input visuals..
+  scanf("%d"); // referencing the undeclared int value a, I need to get the user input and store it in that value. 
+                  // This stuff is similar to the borrowing of a variable in rust, expecpt that here we call it using the actual name : reference
+  printf("You entered this number groot : %d\n", a);
+  return 0;
+                  
+}
+
+
+# This is the Interesting ouput. I compiled normally in gcc. super cool compiler, with no flags enabled and this was the result. 
+❯ ./scanfv3
+Enter a number : 234234
+fish: Job 1, './scanfv3' terminated by signal SIGSEGV (Address boundary error) -> My fish shell terminated this process - is that a segmentation error? SEGV?
+We are not allowed to write there maybe we are writing to that location? (no sure, see the Memory-1, where I will be using objdump -x to get a view of the layout of the memory - not fully explainable, but we can see the structure...)
