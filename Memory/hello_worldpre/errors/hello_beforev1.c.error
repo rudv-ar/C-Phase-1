@@ -1,0 +1,9 @@
+// Just the preprocessor
+#include <stdio.h>
+
+- One running this, the dynamic linker ld was not able to find any main function to start with. So it errored with this message : Next time we define a empty main function.
+
+❯ gcc -o hello_before hello_before.c
+/usr/bin/ld: /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o: in function `_start':
+(.text+0x1b): undefined reference to `main'
+collect2: error: ld returned 1 exit status
