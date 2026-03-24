@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>scanf · Examples-1 · C-Phase-1</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .explain {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    margin: 16px 0 24px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.85;
+  }
+  .explain h4 {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .explain p { margin-bottom: 10px; }
+  .explain p:last-child { margin-bottom: 0; }
+  .explain strong { color: var(--text); }
+  .explain em { color: var(--purple); font-style: normal; }
+
+  .prev-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+    padding: 14px 24px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .prev-link:hover { border-color: var(--accent); background: rgba(0,229,255,0.05); }
+
+  .edge-table { width: 100%; border-collapse: collapse; margin: 14px 0 24px; }
+  .edge-table th {
+    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--dim); padding: 8px 12px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .edge-table td {
+    font-size: 12px; padding: 10px 12px;
+    border-bottom: 1px solid rgba(30,37,53,0.6);
+    vertical-align: top; color: var(--muted);
+  }
+  .edge-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .et-input  { color: var(--accent) !important; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+  .et-result { color: var(--text) !important; }
+  .et-ok     { color: var(--green) !important; font-weight: 600; }
+  .et-warn   { color: var(--orange) !important; font-weight: 600; }
+  .et-crash  { color: #ff4444 !important; font-weight: 600; }
+
+  hr.sd { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+  code { background: rgba(0,229,255,0.08); color: var(--accent); padding: 1px 6px; font-size: 0.9em; font-family: 'JetBrains Mono', monospace; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="breadcrumb">
+    <a href="../index.html">C-Phase-1</a>
+    <span class="sep">/</span>
+    <span>Examples-1</span>
+    <span class="sep">/</span>
+    <span class="current">scanf</span>
+  </div>
+  <h1>SCANF</h1>
+  <p class="subtitle">// user input · &amp;a address-of · 12 edge cases · SIGSEGV · undeclared variables</p>
+</div>
+
+<nav class="tabs">
+  <button class="tab active" onclick="show('v1_working',   this)">v1 · Working Program</button>
+  <button class="tab"        onclick="show('edge_cases',   this)">Edge Cases · 12 Runs</button>
+  <button class="tab"        onclick="show('v2_error',     this)">Error · Undeclared &amp;a</button>
+  <button class="tab"        onclick="show('v3_segfault',  this)">Crash · Missing &amp; → SIGSEGV</button>
+</nav>
+
+<div class="content">
+
+<!-- ═══════════════════════════════════════════════════════════
+     TAB 1 — v1: working program
+════════════════════════════════════════════════════════════ -->
+<div class="section active" id="v1_working">
+
+  <div class="section-title">v1 · scanfv1.c — the working program</div>
+  <p class="section-desc">
+    The correct usage of <code>scanf</code> to read a single integer from the user.
+    Every part of it explained — what scanf is, why <code>&amp;a</code> is required,
+    what <code>%d</code> does, and why you deliberately left out <code>\n</code> on the prompt.
+  </p>
+
+  <div class="concepts">
+    <span class="concept">scanf</span>
+    <span class="concept">%d format specifier</span>
+    <span class="concept">&amp; address-of operator</span>
+    <span class="concept">pointers</span>
+    <span class="concept">stdin</span>
+    <span class="concept">stdout buffering</span>
+    <span class="concept">scanf return value</span>
+  </div>
+
+  <div class="discovery ok">
+    <div class="disc-label">Working Program → scanfv1.c</div>
+    <h3>scanf("%d", &amp;a) — reading an integer from stdin into a local variable</h3>
+
+    <div class="term" style="margin-top:12px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">scanfv1.c — exact source</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <div class="term-body"><pre><span class="cmt">// We are going to get user input! Interesting.</span>
+<span class="cmt">// scanf : function in the standard input output lib.</span>
+<span class="cmt">// Users can provide NON SPACE SEPARATED INPUT.</span>
+
+<span class="key">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+
+  <span class="key">int</span> <span class="val">a</span>;
+
+  <span class="val">printf</span>(<span class="str">"Enter a number : "</span>); <span class="cmt">// not using \n — for input visual purposes</span>
+  <span class="val">scanf</span>(<span class="str">"%d"</span>, &amp;<span class="val">a</span>);           <span class="cmt">// &amp;a : the ADDRESS of a. scanf writes to it.</span>
+                              <span class="cmt">// similar to borrowing in Rust, except raw pointer</span>
+  <span class="val">printf</span>(<span class="str">"You entered this number groot : %d\n"</span>, <span class="val">a</span>);
+  <span class="key">return</span> <span class="val">0</span>;
+}</pre></div>
+    </div>
+
+    <div class="term" style="margin-top:10px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">normal run</span>
+      </div>
+      <div class="term-body"><pre><span class="p">❯</span> <span class="cmd">./scanfv1</span>
+<span class="out">Enter a number : 234
+You entered this number groot : 234</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>What scanf is — and why it is the opposite of printf</h4>
+    <p>
+      <strong>scanf is the input counterpart to printf:</strong>
+      Both are variadic functions declared in <code>stdio.h</code> and implemented in libc.
+      <code>printf</code> takes a format string and a list of <em>values</em> — it reads them
+      and writes formatted text to stdout. <code>scanf</code> takes a format string and a list
+      of <em>pointers</em> — it reads formatted text from stdin and writes parsed values into
+      the memory locations the pointers refer to.
+    </p>
+    <p>
+      <strong>Why scanf takes pointers and printf takes values:</strong>
+      In C, function arguments are passed by value — a copy is made. If scanf took
+      <code>int a</code> directly, it would receive a copy. Writing to the copy would change
+      nothing in your <code>main</code>. To modify a variable in the caller's scope, you must
+      give the callee the variable's address. scanf receives <code>&amp;a</code>, dereferences
+      it, and writes the parsed integer directly into the memory location where <code>a</code>
+      lives on your stack. When scanf returns, <code>a</code> in <code>main</code> has the new
+      value.
+    </p>
+    <p>
+      <strong>Your Rust comparison was accurate:</strong>
+      <em>"similar to borrowing a variable in Rust, except here we call it using the actual
+      name: reference."</em> In Rust, <code>&amp;mut a</code> creates a mutable reference —
+      a compile-time-checked pointer with borrow rules enforced by the compiler. In C,
+      <code>&amp;a</code> creates a raw pointer — the address of <code>a</code>, with no
+      safety guarantees. The concept is identical (give the callee a way to write into your
+      variable), but Rust enforces the rules at compile time while C trusts you completely.
+    </p>
+    <p>
+      <strong>What <code>%d</code> tells scanf to do:</strong>
+      The format specifier <code>%d</code> instructs scanf to: (1) skip any leading whitespace
+      bytes (spaces, tabs, newlines — <code>0x20</code>, <code>0x09</code>, <code>0x0A</code>),
+      (2) read an optional minus sign, (3) read consecutive digit characters and accumulate them
+      into an integer value, (4) stop at the first byte that is not a digit, (5) convert the
+      accumulated characters to a 32-bit signed integer, (6) write it to the <code>int *</code>
+      argument provided. The non-matching byte that terminated parsing is left in stdin for the
+      next read.
+    </p>
+    <p>
+      <strong>printf without <code>\n</code> — the deliberate choice:</strong>
+      <code>printf("Enter a number : ")</code> leaves the cursor at the end of the colon and
+      space. The user types their input right there on the same line — which is the natural
+      feel of an inline prompt. Adding <code>\n</code> would move the cursor to the next line,
+      making the prompt and the input appear on separate lines. The subtle risk: stdout is
+      line-buffered by default when connected to a terminal. Without <code>\n</code>, the
+      prompt text might stay in the buffer and not appear before scanf blocks. In practice this
+      works because scanf triggers a flush when it needs to read. For absolute safety, add
+      <code>fflush(stdout);</code> after the prompt printf.
+    </p>
+    <p>
+      <strong>What scanf returns — the thing you should always check:</strong>
+      scanf returns the number of items successfully matched and assigned as an <code>int</code>.
+      For <code>scanf("%d", &amp;a)</code>: returns <code>1</code> on success, <code>0</code>
+      if the input did not match <code>%d</code> at all (typing letters, just Enter, etc.),
+      and <code>EOF</code> (-1) if the input stream ended (Ctrl+D on Linux) before any
+      conversion. In your code the return value is ignored. Production code always checks:
+      <code>if (scanf("%d", &amp;a) != 1) { /* handle parse failure */ }</code>. Without this
+      check, a failed parse leaves <code>a</code> uninitialized and the program continues
+      silently with garbage data.
+    </p>
+  </div>
+
+</div>
+<!-- END TAB 1 -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     TAB 2 — Edge cases: 12 runs
+════════════════════════════════════════════════════════════ -->
+<div class="section" id="edge_cases">
+
+  <div class="section-title">Edge Cases · 12 Runs from scanfv1.output</div>
+  <p class="section-desc">
+    Every edge case you listed in the source comments, run and recorded in
+    <code>scanfv1.output</code>. Each result explained at the level of what scanf's
+    internal parsing actually did.
+  </p>
+
+  <div class="concepts">
+    <span class="concept">integer parsing</span>
+    <span class="concept">stdin buffer</span>
+    <span class="concept">whitespace skipping</span>
+    <span class="concept">integer overflow</span>
+    <span class="concept">strtol saturation</span>
+    <span class="concept">format mismatch</span>
+    <span class="concept">float truncation</span>
+    <span class="concept">octal literals</span>
+  </div>
+
+  <table class="edge-table">
+    <tr>
+      <th style="width:26%">Input</th>
+      <th style="width:14%">Output</th>
+      <th style="width:12%">Verdict</th>
+      <th>What scanf did</th>
+    </tr>
+    <tr>
+      <td class="et-input">234</td>
+      <td class="et-result">234</td>
+      <td class="et-ok">✓ correct</td>
+      <td>Skipped no whitespace. Read digits 2, 3, 4. Hit EOF. Converted to 234. Wrote to &amp;a. Returned 1.</td>
+    </tr>
+    <tr>
+      <td class="et-input">-234</td>
+      <td class="et-result">-234</td>
+      <td class="et-ok">✓ correct</td>
+      <td>Read leading <code>-</code> (valid for %d). Read digits 2, 3, 4. Converted to -234. Negative integers work fine.</td>
+    </tr>
+    <tr>
+      <td class="et-input">234 256436 24562</td>
+      <td class="et-result">234</td>
+      <td class="et-ok">✓ expected</td>
+      <td>%d stops at whitespace. Read 234, hit the space, stopped. The remaining " 256436 24562\n" stayed in the stdin buffer — unread, available for the next scanf call.</td>
+    </tr>
+    <tr>
+      <td class="et-input">-234 -436 -0</td>
+      <td class="et-result">-234</td>
+      <td class="et-ok">✓ expected</td>
+      <td>Same as above. First token only. The space after <code>-234</code> terminated parsing. Remaining input unread.</td>
+    </tr>
+    <tr>
+      <td class="et-input">(Enter key only)</td>
+      <td class="et-result">waits... then accepts 234</td>
+      <td class="et-warn">⚠ blocks</td>
+      <td>%d skips leading whitespace — newline (0x0A) is whitespace. Pressing Enter gives scanf a byte to discard, not one to parse. scanf went back to blocking on read(). Only a digit or non-whitespace breaks the loop. It never silently accepts empty input.</td>
+    </tr>
+    <tr>
+      <td class="et-input">290375398759087210985710987</td>
+      <td class="et-result">-1</td>
+      <td class="et-warn">⚠ overflow</td>
+      <td>scanf uses strtol() internally. The value exceeded LONG_MAX (9,223,372,036,854,775,807 on x86_64). strtol saturated at LONG_MAX (0x7FFFFFFFFFFFFFFF) and set errno=ERANGE. scanf assigned LONG_MAX to your int a — a 64-bit value truncated to 32 bits: 0xFFFFFFFF = -1 in two's complement. Undefined behavior, but -1 is what this implementation produced.</td>
+    </tr>
+    <tr>
+      <td class="et-input">-2347896587369782134687693876</td>
+      <td class="et-result">0</td>
+      <td class="et-warn">⚠ overflow</td>
+      <td>Huge negative — strtol saturated at LONG_MIN (0x8000000000000000). Truncated to 32-bit int: 0x00000000 = 0. Different saturation value than the positive case, different truncation result.</td>
+    </tr>
+    <tr>
+      <td class="et-input">lskadfjalk</td>
+      <td class="et-result">0</td>
+      <td class="et-warn">⚠ parse fail</td>
+      <td>First character 'l' is not a digit or minus sign. scanf failed to match %d. Returned 0 (zero successful conversions). Did not write to &amp;a. <code>a</code> was uninitialized — its stack slot happened to contain zero bytes (OS zero-fills fresh pages). Undefined behavior printed as 0.</td>
+    </tr>
+    <tr>
+      <td class="et-input">-kjafda</td>
+      <td class="et-result">0</td>
+      <td class="et-warn">⚠ parse fail</td>
+      <td>Leading <code>-</code> is syntactically valid for a negative integer. scanf consumed it, then saw 'k' — not a digit. No digits were read after the minus. scanf produced a matching failure. Same result as pure string input.</td>
+    </tr>
+    <tr>
+      <td class="et-input">234.234</td>
+      <td class="et-result">234</td>
+      <td class="et-ok">✓ truncated</td>
+      <td>%d parsed digits 2, 3, 4. Hit the '.' — not a digit. Stopped. Returned 234. The ".234" remains in stdin. Float input is always truncated toward zero by %d.</td>
+    </tr>
+    <tr>
+      <td class="et-input">0324.2342</td>
+      <td class="et-result">324</td>
+      <td class="et-ok">✓ decimal</td>
+      <td>Leading zero is NOT treated as octal — octal interpretation only happens with integer literals in C source code (e.g. <code>int x = 0324;</code>), not with scanf input. scanf always reads decimal for %d. Read 0324 as decimal 324, stopped at '.'.</td>
+    </tr>
+    <tr>
+      <td class="et-input">-23049.23452352</td>
+      <td class="et-result">-23049</td>
+      <td class="et-ok">✓ truncated</td>
+      <td>Negative float. Read '-', then digits until '.'. Returned -23049. The fractional ".23452352" stays in stdin. Truncates toward zero, not toward negative infinity: -23049.7 would still give -23049, not -23050.</td>
+    </tr>
+  </table>
+
+  <div class="explain">
+    <h4>Deep Explanation — stdin buffering, what stays after scanf, and overflow internals</h4>
+    <p>
+      <strong>The stdin buffer and what "unread input" means:</strong>
+      When you type at the terminal and press Enter, the entire line — including the newline —
+      goes into a kernel-level line buffer, then into libc's stdio buffer for stdin.
+      When scanf calls <code>read(0, buf, n)</code> internally, the kernel delivers all of that
+      buffered data at once. If scanf only consumes part of it (stopping at a space or a period),
+      the rest stays in libc's buffer. The next call to any stdin-reading function —
+      <code>scanf</code>, <code>getchar</code>, <code>fgets</code> — immediately reads from the
+      leftover buffer without blocking for new input. This is the source of a very common bug in
+      C programs that alternate between reading integers and reading characters: the leftover
+      newline from a previous read gets consumed by the next <code>getchar()</code> call,
+      skipping the intended input entirely.
+    </p>
+    <p>
+      <strong>Why the Enter key blocks scanf instead of submitting empty:</strong>
+      The newline character (0x0A) is whitespace, and <code>%d</code> skips all leading
+      whitespace. There is no concept of "empty integer input" in scanf — it will keep skipping
+      whitespace indefinitely until it finds a non-whitespace character to parse. If you need
+      to handle empty input gracefully, use <code>fgets()</code> to read a whole line, then
+      parse it with <code>sscanf()</code> or check if it is empty before parsing.
+    </p>
+    <p>
+      <strong>Integer overflow — the strtol internals:</strong>
+      scanf's <code>%d</code> uses <code>strtol()</code> internally to do the actual parsing.
+      <code>strtol</code> reads the character sequence and accumulates the value as a
+      <code>long</code> (64-bit on x86_64). When the accumulated value would exceed
+      <code>LONG_MAX</code>, strtol clips it to <code>LONG_MAX</code> (0x7FFFFFFFFFFFFFFF)
+      and sets <code>errno = ERANGE</code>. When it would go below <code>LONG_MIN</code>,
+      it clips to <code>LONG_MIN</code> (0x8000000000000000). scanf then assigns this saturated
+      <code>long</code> value to your <code>int *</code> argument — implicitly truncating from
+      64 to 32 bits. <code>LONG_MAX</code> truncated: <code>0x7FFFFFFFFFFFFFFF</code> → low
+      32 bits = <code>0xFFFFFFFF</code> = -1. <code>LONG_MIN</code> truncated:
+      <code>0x8000000000000000</code> → low 32 bits = <code>0x00000000</code> = 0. That is
+      exactly what you observed.
+    </p>
+    <p>
+      <strong>The octal observation for 0324:</strong>
+      In C source code, an integer literal starting with <code>0</code> is interpreted as octal.
+      <code>int x = 0324;</code> sets <code>x</code> to 212 decimal (3×64 + 2×8 + 4). But this
+      interpretation happens at compile time by the lexer — it only applies to literal values
+      written in source code. scanf reads characters at runtime and converts them as decimal for
+      <code>%d</code> regardless of leading zeros. Use <code>%o</code> if you want scanf to
+      parse octal input.
+    </p>
+  </div>
+
+  <div class="note">
+    <strong>The one thing missing from these runs:</strong> You never checked scanf's return value.
+    For the failed parses (string input, leading minus with no digits), scanf returned 0 — but
+    your code had no way to know. <code>if (scanf("%d", &amp;a) != 1) { fprintf(stderr, "bad input\n"); return 1; }</code>
+    is the minimal correct pattern going forward.
+  </div>
+
+</div>
+<!-- END TAB 2 -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     TAB 3 — Error: undeclared &a (v2)
+════════════════════════════════════════════════════════════ -->
+<div class="section" id="v2_error">
+
+  <div class="section-title">Error · scanfv2.c — &amp;a on an undeclared variable</div>
+  <p class="section-desc">
+    <code>int a;</code> was commented out. <code>&amp;a</code> still used.
+    Compile-time error. You also questioned the compiler's deduplication note —
+    this tab explains exactly what it means.
+  </p>
+
+  <div class="concepts">
+    <span class="concept">undeclared identifier</span>
+    <span class="concept">symbol table</span>
+    <span class="concept">error deduplication</span>
+    <span class="concept">cascade errors</span>
+    <span class="concept">-Wunused-but-set-variable</span>
+  </div>
+
+  <div class="discovery warn">
+    <div class="disc-label">Error Documented → errors/scanfv2.c.error</div>
+    <h3>'a' undeclared — and the compiler's deduplication note</h3>
+
+    <div class="term" style="margin-top:12px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">scanfv2.c — the only change from v1</span>
+      </div>
+      <div class="term-body"><pre><span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+
+  <span class="cmt">//int a;   ← commented out. a no longer exists.</span>
+
+  <span class="val">printf</span>(<span class="str">"Enter a number : "</span>);
+  <span class="val">scanf</span>(<span class="str">"%d"</span>, &amp;<span class="val">a</span>);   <span class="err">// ← 'a' was never declared</span>
+  <span class="val">printf</span>(<span class="str">"You entered this number groot : %d\n"</span>, <span class="val">a</span>);
+  <span class="key">return</span> <span class="val">0</span>;
+}</pre></div>
+    </div>
+
+    <div class="term" style="margin-top:10px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">gcc output — exact</span>
+      </div>
+      <div class="term-body"><pre><span class="err">scanfv2.c: In function 'main':</span>
+<span class="err">scanfv2.c:11:16: error: 'a' undeclared (first use in this function)</span>
+<span class="err">   11 |   scanf("%d", &amp;a);</span>
+<span class="err">      |                ^</span>
+<span class="err">scanfv2.c:11:16: note: each undeclared identifier is reported only once</span>
+<span class="err">                       for each function it appears in</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>What "undeclared" means at the compiler level</h4>
+    <p>
+      <strong>The symbol table:</strong>
+      The C compiler maintains a symbol table — a data structure mapping names to their
+      type, storage class, and location. When you write <code>int a;</code>, the compiler
+      adds an entry: name = "a", type = int, storage = stack frame, offset = (calculated
+      by the compiler). Every subsequent reference to <code>a</code> is looked up in this
+      table to determine its type (for type-checking) and location (to generate the correct
+      machine code instruction).
+    </p>
+    <p>
+      <strong>What happens when the declaration is missing:</strong>
+      When the compiler encounters <code>&amp;a</code> on line 11, it looks up "a" in the
+      symbol table. There is no entry — you commented out the declaration. The compiler
+      cannot produce the address of something that does not exist in its symbol table. It
+      cannot determine the type of <code>a</code>, so it cannot verify that <code>&amp;a</code>
+      is a valid <code>int *</code> argument for scanf's <code>%d</code>. It has nothing to
+      work with. It errors.
+    </p>
+    <p>
+      <strong>Answering your question about the deduplication note:</strong>
+      <em>"each undeclared identifier is reported only once for each function it appears in —
+      What? So if we are going to use multiple &amp;a, will those not be reported?"</em>
+      Correct — that is exactly what the note says. If you used <code>&amp;a</code> ten times
+      in <code>main</code>, gcc would report the undeclared error only at the first occurrence,
+      on line 11. The remaining nine uses would be silently skipped in the error output.
+    </p>
+    <p>
+      <strong>Why gcc deduplicates:</strong>
+      Once gcc knows "a" is undeclared, every subsequent use of "a" in the same function
+      is a direct consequence of the exact same root cause — the missing declaration.
+      Reporting it ten times would produce ten near-identical error lines, bury other
+      unrelated errors below them, and force you to scroll past the noise to find other
+      problems. By reporting once and noting the deduplication policy, gcc is telling you:
+      "fix the declaration, and all ten references are fixed simultaneously." This is the
+      same cascade-suppression philosophy you saw in 1.2's fartocelv1, where one missing
+      semicolon produced a waterfall of "undeclared" errors for every variable in the
+      declaration.
+    </p>
+    <p>
+      <strong>Why this is a hard compile error and not a warning:</strong>
+      Using an undeclared name is an unrecoverable situation. The compiler cannot guess what
+      type <code>a</code> was supposed to be. In K&amp;R C (pre-C99), undeclared names in
+      some contexts were implicitly treated as <code>int</code> — the infamous "implicit int"
+      rule. C99 removed this. Under <code>-std=c11</code>, every name must be declared before
+      use. No declaration, no code generation.
+    </p>
+  </div>
+
+  <div class="note">
+    <strong>The rule in practice:</strong> When you get a cascade of undeclared errors,
+    look at the <em>first</em> error in the list — not the last, not the middle. Fix the
+    first one and recompile. Ninety percent of the subsequent errors will disappear because
+    they were all downstream of the same missing declaration.
+  </div>
+
+</div>
+<!-- END TAB 3 -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     TAB 4 — Crash: missing & → SIGSEGV (v3)
+════════════════════════════════════════════════════════════ -->
+<div class="section" id="v3_segfault">
+
+  <div class="section-title">Crash · scanfv3.c — scanf("%d") with no &amp;a → SIGSEGV</div>
+  <p class="section-desc">
+    <code>&amp;a</code> was removed. <code>scanf("%d")</code> was called with no destination pointer.
+    Compiled without <code>-Wall</code> — no warnings. Ran. Segfaulted immediately on integer input.
+    Survived on string input. You asked: "is that a segmentation error? SEGV?" — this tab answers fully.
+  </p>
+
+  <div class="concepts">
+    <span class="concept">SIGSEGV</span>
+    <span class="concept">segmentation fault</span>
+    <span class="concept">garbage pointer</span>
+    <span class="concept">MMU page fault</span>
+    <span class="concept">variadic arguments</span>
+    <span class="concept">x86_64 calling convention</span>
+    <span class="concept">-Wformat missing</span>
+    <span class="concept">write vs no-write code path</span>
+  </div>
+
+  <div class="discovery warn">
+    <div class="disc-label">Critical Error → errors/scanfv3.c.error</div>
+    <h3>Compiled silently — crashed at runtime — fish reported SIGSEGV</h3>
+
+    <div class="term" style="margin-top:12px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">scanfv3.c — the only change from v1</span>
+      </div>
+      <div class="term-body"><pre><span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+
+  <span class="key">int</span> <span class="val">a</span>;
+
+  <span class="val">printf</span>(<span class="str">"Enter a number : "</span>);
+  <span class="val">scanf</span>(<span class="str">"%d"</span>);    <span class="err">// ← &amp;a removed. no destination pointer provided.</span>
+  <span class="val">printf</span>(<span class="str">"You entered this number groot : %d\n"</span>, <span class="val">a</span>);
+  <span class="key">return</span> <span class="val">0</span>;
+}</pre></div>
+    </div>
+
+    <div class="term" style="margin-top:10px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">compiled without flags — then three inputs tested</span>
+      </div>
+      <div class="term-body"><pre><span class="p">❯</span> <span class="cmd">gcc -o scanfv3 scanfv3.c</span>
+<span class="out">  (no output — compiled silently. no -Wall, no -Wformat check.)</span>
+
+<span class="p">❯</span> <span class="cmd">./scanfv3</span>
+<span class="out">Enter a number : 234234</span>
+<span class="err">fish: Job 1, './scanfv3' terminated by signal SIGSEGV (Address boundary error)</span>
+
+<span class="p">❯</span> <span class="cmd">./scanfv3.e.bin</span>
+<span class="out">Enter a number : sf</span>
+<span class="out">You entered this number groot : 0</span>   <span class="cmt">← string input: no crash!</span>
+
+<span class="p">❯</span> <span class="cmd">./scanfv3.e.bin</span>
+<span class="out">Enter a number : 234.234</span>
+<span class="err">fish: Job 1, './scanfv3.e.bin' terminated by signal SIGSEGV (Address boundary error)</span>
+
+<span class="p">❯</span> <span class="cmd">./scanfv3.e.bin</span>
+<span class="out">Enter a number : 82375902837523857023985709847982348234932478324789234789234</span>
+<span class="err">fish: Job 1, './scanfv3.e.bin' terminated by signal SIGSEGV (Address boundary error)</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>What SIGSEGV is — from the x86_64 ABI to the kernel signal</h4>
+    <p>
+      <strong>What happens without <code>&amp;a</code> — the ABI perspective:</strong>
+      On x86_64, variadic function arguments are passed in registers first (rdi, rsi, rdx, rcx,
+      r8, r9 for integer/pointer arguments), then on the stack if there are more. When you call
+      <code>scanf("%d")</code>, the compiler puts the address of the format string into
+      <code>rdi</code> (first argument). That is it. There is no second argument. scanf receives
+      the format string, parses it, finds <code>%d</code>, and internally reaches for the
+      pointer it expects — the second argument. It reads the value that happens to be in
+      <code>rsi</code> at that moment. <code>rsi</code> was not set by your call — it contains
+      whatever value it held from the last function call before scanf. That is a random 64-bit
+      value. scanf treats it as a memory address and attempts to write the parsed integer there.
+    </p>
+    <p>
+      <strong>Why writing to a random address causes SIGSEGV:</strong>
+      Every process on Linux runs with virtual memory. The kernel maintains a page table mapping
+      virtual addresses to physical memory frames. Only addresses that are mapped in the page table
+      are valid to read or write. When scanf issues a store instruction to the garbage address
+      in <code>rsi</code>, the CPU's Memory Management Unit (MMU) walks the page table, finds no
+      valid mapping for that address (or finds a read-only mapping), and raises a page fault
+      exception. The kernel's page fault handler examines the fault: can it be resolved? (No —
+      there is no mapping, or the mapping is read-only, and this was not a legitimate access.) It
+      sends signal 11 — <code>SIGSEGV</code> — to the process. The default handler for SIGSEGV
+      terminates the process immediately. Fish reports what happened.
+    </p>
+    <p>
+      <strong>SIGSEGV name and history:</strong>
+      "Segmentation violation." The name comes from an older memory model where a process's
+      address space was divided into hardware <em>segments</em> — code segment, data segment,
+      stack segment. Accessing memory outside the bounds of any valid segment triggered a
+      "segmentation violation." On modern x86_64 Linux, hardware segmentation is mostly not
+      used (segments are set to cover the full address space), and the protection is done entirely
+      by the MMU's page tables. But the signal name and its conventional meaning — "you accessed
+      memory you do not own" — persist unchanged.
+    </p>
+    <p>
+      <strong>Why string input ("sf") did not crash — the crucial difference:</strong>
+      When you typed <code>sf</code>, scanf tried to match <code>%d</code>. The first character
+      is <code>s</code> — not a digit, not a minus sign. scanf immediately detected a matching
+      failure and returned 0. <em>It never attempted to write anything.</em> No store instruction
+      was issued to the garbage pointer. No memory access, no page fault, no signal. The program
+      continued to the next printf, printed <code>a</code> (uninitialized, stack happened to be
+      zero), and exited normally.
+    </p>
+    <p>
+      <strong>Why float input (234.234) crashed when string input did not:</strong>
+      <code>234.234</code> starts with <code>2</code> — a valid digit. scanf successfully parsed
+      the integer part <code>234</code>, then attempted to write it to the garbage pointer. That
+      write triggered the page fault. This is the exact difference: string input hits a matching
+      failure before any write occurs; float input passes the matching phase and only fails at
+      the write. Same explanation for the huge overflow number — parsing succeeded (or saturated),
+      write was attempted, crash.
+    </p>
+    <p>
+      <strong>Why it compiled silently without <code>-Wall</code>:</strong>
+      In C, calling a variadic function with fewer arguments than the format string expects is
+      not a syntax error — it is a runtime semantic error. The compiler cannot statically check
+      variadic argument counts without help. That help comes from the
+      <code>__attribute__((__format__(__scanf__, 1, 2)))</code> annotation on scanf's declaration
+      in <code>stdio.h</code>, and from the <code>-Wformat</code> diagnostic pass, which is
+      activated by <code>-Wall</code>. You compiled with <code>gcc -o scanfv3 scanfv3.c</code> —
+      no flags. The format-checking pass never ran. With <code>-Wall</code>, gcc would have
+      warned: <em>warning: format '%d' expects a matching 'int *' argument [-Wformat=]</em>.
+      This would have caught the bug before you ran the program. This is the exact argument for
+      always using <code>-Wall -Wextra -Wpedantic</code>.
+    </p>
+    <p>
+      <strong>Your note: "see Memory-1, where I will use objdump -x":</strong>
+      That is the right next step. <code>objdump -x ./scanfv3</code> will show you the ELF
+      section headers and the memory map of the binary — where the code, data, rodata, and bss
+      sections live. Running the broken binary under Valgrind with
+      <code>--track-origins=yes</code> would show you which register contained the garbage
+      pointer and trace it back to where that value originated. Combining objdump's static view
+      with Valgrind's dynamic trace gives you a complete picture of what the memory looked like
+      at the moment of the crash.
+    </p>
+  </div>
+
+  <hr class="sd">
+
+  <div class="section-title" style="font-size:22px; margin-bottom:8px">Conclusions — scanf</div>
+  <table class="vtable">
+    <tr><th>Question</th><th>Answer</th></tr>
+    <tr>
+      <td>Why does scanf need <code>&amp;a</code> and not <code>a</code>?</td>
+      <td class="vok">scanf writes a value into a memory location. It needs an address. <code>a</code> is a value; <code>&amp;a</code> is the address of <code>a</code> on your stack. Without <code>&amp;</code>, scanf reads garbage from the register and tries to write to that address — SIGSEGV.</td>
+    </tr>
+    <tr>
+      <td>What does <code>%d</code> do with float input like 234.234?</td>
+      <td class="vok">Reads digits until the first non-digit. The <code>.</code> stops parsing. Returns 234. The <code>.234</code> stays in stdin. Truncates toward zero — not toward negative infinity.</td>
+    </tr>
+    <tr>
+      <td>Why did string input not crash scanfv3, but integer input did?</td>
+      <td style="color:var(--accent)">String input causes a format mismatch — scanf fails before writing. No write = no garbage-pointer dereference = no SIGSEGV. Integer input succeeds in parsing, then writes to the garbage pointer — crash.</td>
+    </tr>
+    <tr>
+      <td>What does scanf return, and why does it matter?</td>
+      <td class="vok">Count of successfully assigned items: 1 on success, 0 on mismatch, EOF (-1) on end-of-stream. Always check it. Ignoring it means a failed parse leaves variables uninitialized and the program continues silently with garbage.</td>
+    </tr>
+    <tr>
+      <td>Why did the broken scanfv3 compile without error?</td>
+      <td class="vfail">Missing variadic arguments are not a syntax error — only detectable with <code>-Wformat</code> (part of <code>-Wall</code>). Compiled without any flags: no check ran. Always use <code>-Wall -Wextra -Wpedantic -std=c11</code>.</td>
+    </tr>
+    <tr>
+      <td>What is SIGSEGV?</td>
+      <td style="color:var(--accent)">Signal 11. Sent by the kernel when a process accesses a virtual address with no valid page-table mapping, or a read-only mapping on a write. The MMU raises a page fault; the kernel cannot resolve it; it kills the process with SIGSEGV.</td>
+    </tr>
+  </table>
+
+  <div class="warn-note" style="margin-top:24px">
+    <strong>The permanent rule:</strong> Every scalar argument to scanf takes <code>&amp;</code>.
+    Always. <code>scanf("%d %d", &amp;a, &amp;b)</code> — two ints, two addresses.
+    The only exception is <code>char[]</code> buffers — they already decay to a pointer and do
+    not take <code>&amp;</code>. That case comes later when strings are covered.
+  </div>
+
+</div>
+<!-- END TAB 4 -->
+
+<!-- ═══ PREV LINK ═══ -->
+<a class="prev-link" href="hello_world.html">
+  <span>←</span>
+  <span>← Back to hello_world</span>
+</a>
+
+</div><!-- .content -->
+
+<script src="../assets/app.js" defer></script>
+</body>
+</html>
+
