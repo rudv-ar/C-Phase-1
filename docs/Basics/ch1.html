@@ -101,6 +101,7 @@
   <button class="tab active" onclick="show('ex11', this)">1.1 · Hello World</button>
   <button class="tab" onclick="show('ex12', this)">1.2 · Fahrenheit→Celsius</button>
   <button class="tab" onclick="show('ex13', this)">1.3 · Exploratory</button>
+  <button class="tab" onclick="show('ex14', this)">1.4 · #include Internals</button>
 </nav>
 
 <div class="content">
@@ -1301,6 +1302,570 @@ v = <span class="val">100</span>;  u = <span class="val">300</span>;  z = <span 
 
 </div>
 <!-- END 1.3 -->
+
+
+
+
+<div class="section" id="ex14">
+
+  <div class="section-title">1.4 — #include Internals · Exploratory</div>
+  <p class="section-desc">
+    Not a K&amp;R exercise. A direct experiment to prove what <code>#include</code> actually does at the file system level —
+    initiated by one question from 1.3: <em>if &lt;&gt; searches the system and "" searches the current directory first,
+    what happens if you copy the real stdio.h locally and modify it?</em>
+    Two versions, one renamed file, one custom function injected into a system header, and a clean proof
+    that file extensions mean nothing to the C preprocessor.
+  </p>
+
+  <div class="concepts">
+    <span class="concept">#include mechanics</span>
+    <span class="concept">preprocessor</span>
+    <span class="concept">&lt;&gt; vs ""</span>
+    <span class="concept">file extension convention</span>
+    <span class="concept">include guards</span>
+    <span class="concept">function definitions in headers</span>
+    <span class="concept">declarations vs definitions</span>
+    <span class="concept">libc</span>
+    <span class="concept">symbol resolution</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       VERSION OVERVIEW
+  ════════════════════════════════════════════════════════ -->
+
+  <div class="versions-grid">
+    <div class="version-card ok">
+      <div class="vc-label">working · v1</div>
+      <div class="vc-file">hello_again.c + stdio.h (modified)</div>
+      <div class="vc-desc">Copied real stdio.h locally. Added <code>try_func()</code> definition at the bottom. Included with <code>"stdio.h"</code> (quotes). Both <code>try_func()</code> and <code>printf</code> worked.</div>
+    </div>
+    <div class="version-card ok">
+      <div class="vc-label">key discovery · v2</div>
+      <div class="vc-file">hello_again.c + stdio.c (renamed)</div>
+      <div class="vc-desc">Renamed stdio.h → stdio.c. Changed include to <code>"stdio.c"</code>. Still worked. Proved: the .h extension is a human convention, not a compiler rule.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       BACKGROUND — what the experiment was testing
+  ════════════════════════════════════════════════════════ -->
+
+  <div class="discovery info">
+    <div class="disc-label">Background — the question this was answering</div>
+    <h3>From 1.3: you already knew "" searches locally. So what if you own the local copy?</h3>
+    <p>
+      In 1.3 you established that <code>#include &lt;stdio.h&gt;</code> uses the system copy and
+      <code>#include "stdio.h"</code> searches the current directory first. The natural next question:
+      if you physically place a file named <code>stdio.h</code> in your working directory and include it with quotes,
+      the preprocessor will use <em>yours</em> instead of the system's.
+      And if it pastes the file in verbatim, you can put anything in it — including your own function definitions.
+      1.4 is the proof of concept for that entire chain of reasoning.
+    </p>
+  </div>
+
+  <hr class="sd">
+
+  <!-- ═══════════════════════════════════════════════════════
+       V1 — modified stdio.h with try_func
+  ════════════════════════════════════════════════════════ -->
+
+  <div class="discovery ok">
+    <div class="disc-label">Working · v1 — hello_again.c + modified stdio.h</div>
+    <h3>Copy the real stdio.h, inject a function, include it with quotes — it works</h3>
+
+    <div class="term" style="margin-top:12px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">hello_again.c — exact source</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <div class="term-body"><pre><span class="key">#include</span> <span class="str">"stdio.h"</span>
+
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+  <span class="val">try_func</span>();
+  <span class="val">printf</span>(<span class="str">"This is the real hello world...\n"</span>);
+
+} <span class="cmt">// What about renaming this header to stdio.c? what happens?</span>
+  <span class="cmt">// try that in v2</span></pre></div>
+    </div>
+
+    <div class="term" style="margin-top:10px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">tail of local stdio.h — the appended function</span>
+      </div>
+      <div class="term-body"><pre><span class="cmt">/* ... 978 lines of real stdio.h ... */</span>
+
+<span class="key">#endif</span>
+
+<span class="key">__END_DECLS</span>
+
+<span class="key">void</span> <span class="val">try_func</span>(<span class="key">void</span>) {
+  <span class="val">printf</span>(<span class="str">"Hello World from anonymous?\n"</span>);
+}
+
+
+<span class="key">#endif</span> <span class="cmt">/* &lt;stdio.h&gt; included. */</span></pre></div>
+    </div>
+
+    <div class="term" style="margin-top:10px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">terminal — compile and run</span>
+      </div>
+      <div class="term-body"><pre><span class="p">❯</span> <span class="cmd">gcc -Wall -Wextra -Wpedantic -std=c11 -o hello_again hello_again.c</span>
+<span class="p">❯</span> <span class="cmd">./hello_again</span>
+<span class="out">Hello World from anonymous?
+This is the real hello world...</span></pre></div>
+    </div>
+  </div>
+
+  <!-- Deep explanation for v1 -->
+  <div class="explain">
+    <h4>Deep Explanation — what the preprocessor did, step by step</h4>
+    <p>
+      <strong>The compile invocation:</strong> When you ran <code>gcc ... hello_again.c</code>, the first thing gcc
+      launched was <code>cpp</code> — the C preprocessor — on your source file. The preprocessor
+      scans the file top to bottom looking for lines beginning with <code>#</code>.
+    </p>
+    <p>
+      <strong>The include directive with quotes:</strong> It hit <code>#include "stdio.h"</code>. The double-quote form
+      tells the preprocessor: search for <code>stdio.h</code> starting in the directory containing the
+      current source file (<code>Basics/1.4/v1/</code>). It found <code>stdio.h</code> there — your local copy.
+      It opened it, and performed a textual substitution: the entire content of that file was inserted inline,
+      at exactly the position of the <code>#include</code> line. The <code>#include</code> directive itself disappeared.
+    </p>
+    <p>
+      <strong>What "entire content" means:</strong> All 985 lines of your modified <code>stdio.h</code> — including every
+      macro definition, every type alias, every extern function declaration, <em>and</em> your appended
+      <code>try_func</code> definition — were pasted into the translation unit before the compiler saw a single
+      token of your actual code. By the time the compiler started parsing, from its perspective, <code>try_func</code>
+      was already defined above <code>main</code>.
+    </p>
+    <p>
+      <strong>Why <code>printf</code> still worked:</strong> Your local <code>stdio.h</code> is the real system header —
+      you copied it verbatim from <code>/usr/include/stdio.h</code>. It still contains the real
+      <code>extern int printf(const char *__restrict __format, ...)</code> declaration. The compiler
+      saw that declaration (from your local copy), type-checked your <code>printf</code> call correctly,
+      and emitted a call instruction. At link time, the linker found <code>printf</code>'s actual
+      implementation in <code>libc.so.6</code> as it always does — that part is unaffected by which
+      copy of the header you used. The header only provides the declaration. The library provides
+      the implementation.
+    </p>
+    <p>
+      <strong>Why you placed <code>try_func</code> <em>after</em> <code>__END_DECLS</code>:</strong>
+      The real <code>stdio.h</code> wraps its entire content between <code>__BEGIN_DECLS</code> and
+      <code>__END_DECLS</code>. These are macros that expand to <code>extern "C" {</code> and <code>}</code>
+      respectively when compiled as C++ (to suppress C++ name mangling on C function names).
+      In a pure C compilation they expand to nothing. Appending after <code>__END_DECLS</code> keeps
+      your function outside that block — a reasonable placement, though in a C-only context it makes
+      no functional difference.
+    </p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       DEFINITIONS BLOCK — #include mechanics
+  ════════════════════════════════════════════════════════ -->
+
+  <div class="discovery info">
+    <div class="disc-label">Definition — #include, the preprocessor, and the two include forms</div>
+    <h3>What #include actually is, and what the angle-bracket vs quote distinction does</h3>
+
+    <div class="term" style="margin-top:10px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">the two forms</span>
+      </div>
+      <div class="term-body"><pre><span class="key">#include</span> <span class="str">&lt;stdio.h&gt;</span>   <span class="cmt">// angle brackets — system include paths only</span>
+                         <span class="cmt">// searches: /usr/include, /usr/local/include,</span>
+                         <span class="cmt">// and any -I paths passed to gcc</span>
+                         <span class="cmt">// does NOT search the current directory</span>
+
+<span class="key">#include</span> <span class="str">"myfile.h"</span>  <span class="cmt">// double quotes — current directory first</span>
+                         <span class="cmt">// searches: directory of the source file being compiled</span>
+                         <span class="cmt">// then falls back to the same paths as &lt;&gt;</span>
+                         <span class="cmt">// use this for your own headers</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>Deep Explanation — the preprocessor as a pure text transformer</h4>
+    <p>
+      <strong>The preprocessor is not a compiler:</strong> It does not parse C syntax. It does not understand types,
+      expressions, or control flow. It is a stream processor that reads text, responds to directives
+      (lines beginning with <code>#</code>), and outputs transformed text. The three things it does:
+      <em>file inclusion</em> (<code>#include</code>), <em>macro substitution</em> (<code>#define</code>),
+      and <em>conditional compilation</em> (<code>#ifdef</code> / <code>#if</code> / <code>#endif</code>).
+      That is the entire job. The output — a single merged text file — is what the actual C compiler
+      (cc1, inside gcc) receives.
+    </p>
+    <p>
+      <strong><code>#include</code> as literal file paste:</strong> When the preprocessor encounters
+      <code>#include "stdio.h"</code>, it performs a single operation: open the file, read every byte,
+      and emit those bytes into the output stream at the current position. There is no parsing, no
+      validation, no type-checking. If you put a Python script in that file, the preprocessor would
+      paste it in without complaint — the compiler would then fail to parse the result. The preprocessor
+      does not care what is in the file. It only cares that the file exists and is readable.
+    </p>
+    <p>
+      <strong>See it yourself:</strong> Run <code>gcc -E hello_again.c</code> — the <code>-E</code> flag
+      stops compilation after preprocessing and dumps the expanded output to stdout. You will see your
+      ~985 lines of <code>stdio.h</code> pasted in, followed by your <code>try_func</code> definition,
+      followed by <code>main</code>. That is exactly what the compiler parses. This is one of the most
+      educational things you can do with any non-trivial C file.
+    </p>
+    <p>
+      <strong>The search algorithm in full detail:</strong> For <code>#include "file"</code>, the preprocessor
+      searches in this order: (1) the directory containing the file that contains the <code>#include</code>
+      directive — not the current working directory of the shell, but the directory of the source
+      <em>file</em>. (2) the directories of any file that included that file (following the chain
+      of inclusions upward). (3) the same system paths that <code>&lt;&gt;</code> uses. For
+      <code>#include &lt;file&gt;</code>, only step (3) applies. This means if you have a header at
+      <code>src/utils/mylib.h</code> that includes <code>"config.h"</code>, the preprocessor looks
+      for <code>config.h</code> in <code>src/utils/</code> first — regardless of where you invoked
+      gcc from.
+    </p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       DEFINITION — include guards
+  ════════════════════════════════════════════════════════ -->
+
+  <div class="discovery info">
+    <div class="disc-label">Definition — Include Guards</div>
+    <h3>The #ifndef / #define / #endif pattern at the top of every real header</h3>
+
+    <div class="term" style="margin-top:10px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">top and bottom of stdio.h — the include guard</span>
+      </div>
+      <div class="term-body"><pre><span class="cmt">/* line 24 of stdio.h */</span>
+<span class="key">#ifndef</span> <span class="val">_STDIO_H</span>          <span class="cmt">// "if _STDIO_H is not yet defined..."</span>
+<span class="key">#define</span> <span class="val">_STDIO_H</span>  <span class="val">1</span>       <span class="cmt">// "...define it now, so next time this check fails"</span>
+
+<span class="cmt">/* ... entire header content ... */</span>
+
+<span class="key">#endif</span>                     <span class="cmt">// "end of the conditional block"</span>
+<span class="cmt">/* line 985 — last line of stdio.h */</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>Deep Explanation — why include guards exist and what happens without them</h4>
+    <p>
+      <strong>The problem they solve:</strong> Large C programs have many source files, each including
+      multiple headers, and those headers may include other headers. It is entirely common for
+      <code>stdio.h</code> to be included — directly or indirectly — five or ten times in a single
+      translation unit after all the inclusions are resolved. Without a guard, the preprocessor
+      would paste the full contents of <code>stdio.h</code> five or ten times into the output.
+      This causes <em>redefinition errors</em>: the compiler sees <code>typedef ... FILE;</code>
+      declared twice, sees <code>extern int printf(...);</code> twice, and errors out.
+    </p>
+    <p>
+      <strong>How the guard works:</strong> The first time the preprocessor encounters
+      <code>#include &lt;stdio.h&gt;</code>, <code>_STDIO_H</code> is not defined. The
+      <code>#ifndef _STDIO_H</code> condition is true, so the block executes.
+      The first thing inside the block is <code>#define _STDIO_H 1</code> — it immediately
+      defines the macro. All the real header content follows. The <code>#endif</code> closes
+      the block. The second time the preprocessor sees <code>#include &lt;stdio.h&gt;</code>
+      in the same translation unit, <code>_STDIO_H</code> is now defined. The
+      <code>#ifndef</code> condition is false. The entire block — all 960-odd lines — is
+      skipped. Zero redefinitions.
+    </p>
+    <p>
+      <strong>Why your appended <code>try_func</code> was <em>outside</em> the guard:</strong>
+      You placed it after <code>__END_DECLS</code> but there is a subtlety: look at the end of
+      the real file — the final <code>#endif</code> is the one that closes the
+      <code>#ifndef _STDIO_H</code> guard. Anything you append after that final
+      <code>#endif</code> is outside the guard and will be included every single time the
+      header is pasted in. In a multi-file project where two source files both include your
+      modified <code>stdio.h</code>, you would get two definitions of <code>try_func</code>
+      and the linker would error: <em>multiple definition of 'try_func'</em>.
+      For a single-file experiment it works fine, but this is exactly why you do not put
+      function <em>definitions</em> in headers in real code — only declarations.
+    </p>
+    <p>
+      <strong>Modern alternative — <code>#pragma once</code>:</strong> Many compilers including
+      gcc and clang support <code>#pragma once</code> as the first line of a header as a
+      shorthand for the entire ifndef/define/endif pattern. It is not in the ISO C standard
+      (it is a compiler extension), but it works on every compiler you will realistically use
+      on Linux. System headers use the guard pattern because they must be portable to compilers
+      that do not support pragmas.
+    </p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       DEFINITION — declarations vs definitions
+  ════════════════════════════════════════════════════════ -->
+
+  <div class="discovery info">
+    <div class="disc-label">Definition — Declarations vs Definitions</div>
+    <h3>The most important distinction in C: what a header should contain, and why</h3>
+
+    <div class="term" style="margin-top:10px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">declarations vs definitions — annotated</span>
+      </div>
+      <div class="term-body"><pre><span class="cmt">// DECLARATION — tells the compiler a thing exists and what type it is</span>
+<span class="cmt">// no storage allocated, no code emitted, can appear many times</span>
+<span class="key">extern</span> <span class="key">int</span> <span class="val">printf</span>(<span class="key">const</span> <span class="key">char</span> *<span class="val">__format</span>, ...);  <span class="cmt">// from stdio.h</span>
+<span class="key">extern</span> <span class="key">int</span> <span class="val">some_global</span>;                         <span class="cmt">// variable declared elsewhere</span>
+
+<span class="cmt">// DEFINITION — the actual thing: allocates storage or emits code</span>
+<span class="cmt">// must appear exactly once across the whole program</span>
+<span class="key">void</span> <span class="val">try_func</span>(<span class="key">void</span>) {                           <span class="cmt">// function definition</span>
+  <span class="val">printf</span>(<span class="str">"Hello World from anonymous?\n"</span>);      <span class="cmt">// has a body — emits machine code</span>
+}
+<span class="key">int</span> <span class="val">some_global</span> = <span class="val">42</span>;                          <span class="cmt">// variable definition — allocates 4 bytes</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>Deep Explanation — the one definition rule and why it matters for headers</h4>
+    <p>
+      <strong>The One Definition Rule (ODR):</strong> In C, a function or variable may be
+      <em>declared</em> as many times as needed — the compiler treats each declaration as
+      a promise that the thing exists somewhere. But it must be <em>defined</em> exactly once
+      across the entire program. The linker's job is to match every reference to a name with
+      exactly one definition. If it finds two definitions of the same name, it errors:
+      <em>multiple definition of 'try_func'</em>. If it finds zero, it errors:
+      <em>undefined reference to 'try_func'</em>.
+    </p>
+    <p>
+      <strong>Why headers contain only declarations:</strong> A header is included in potentially
+      many <code>.c</code> files. Each <code>.c</code> file is compiled separately into its own
+      <code>.o</code> object file. If the header contained a function definition, that definition
+      would be compiled into <em>every</em> <code>.o</code> that included the header. The linker
+      would then find multiple copies of the same symbol and fail. By putting only declarations
+      in headers, you allow many files to know about a function without each of them containing
+      the implementation. One <code>.c</code> file contains the definition; all others just use
+      the declaration from the header.
+    </p>
+    <p>
+      <strong>What stdio.h actually contains:</strong> Open <code>cat /usr/include/stdio.h</code>
+      and search for <code>printf</code>. You will find a line like:
+      <code>extern int printf (const char *__restrict __fmt, ...) __attribute__((__format__(__printf__, 1, 2)));</code>
+      That is a declaration, not a definition — it has no body, no braces. The <code>extern</code>
+      keyword makes this explicit: "this thing exists, but not here." The actual printf implementation
+      — hundreds of lines of formatting logic — is in the glibc source, compiled into
+      <code>/usr/lib/libc.so.6</code>. The header is the menu. The library is the kitchen.
+    </p>
+    <p>
+      <strong>The <code>__attribute__((__format__(...)))</code> annotation:</strong> This is a gcc
+      extension that tells the compiler "the first argument to this function is a printf-style format
+      string, and the additional arguments start at position 2." This is how gcc implements
+      <code>-Wformat</code> checking — the warning you saw in 1.2 when you called
+      <code>printf("%d\t%d\n")</code> with no arguments. Without this attribute, gcc would have no
+      way to know that <code>printf</code>'s first argument controls the types of its remaining
+      arguments. It is the same mechanism that would let you write your own printf-style logging
+      function and get format-string warnings for it too, by applying the same attribute to your
+      function declaration.
+    </p>
+  </div>
+
+  <hr class="sd">
+
+  <!-- ═══════════════════════════════════════════════════════
+       V2 — KEY DISCOVERY: rename to .c, still works
+  ════════════════════════════════════════════════════════ -->
+
+  <div class="discovery ok">
+    <div class="disc-label">Key Discovery · v2 — hello_again.c + stdio.c (renamed)</div>
+    <h3>Rename stdio.h → stdio.c, change the include to "stdio.c" — still compiles, still runs</h3>
+
+    <div class="term" style="margin-top:12px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">hello_again.c v2 — only change is the include filename</span>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+      <div class="term-body"><pre><span class="key">#include</span> <span class="str">"stdio.c"</span>   <span class="cmt">// ← was "stdio.h" in v1. renamed file. still works.</span>
+
+<span class="key">int</span> <span class="val">main</span>(<span class="key">void</span>) {
+  <span class="val">try_func</span>();
+  <span class="val">printf</span>(<span class="str">"This is the real hello world...\n"</span>);
+
+} <span class="cmt">// Ok, it works, so it : anything.h is just a representation that it is not</span>
+  <span class="cmt">// a normal c file, but a headers file which does not include any executable</span>
+  <span class="cmt">// stuffs, but only definitions and declarations of Constants and those</span>
+  <span class="cmt">// functions are actually present in another file. libc library.</span></pre></div>
+    </div>
+
+    <div class="term" style="margin-top:10px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">terminal — compile and run</span>
+      </div>
+      <div class="term-body"><pre><span class="p">❯</span> <span class="cmd">gcc -Wall -Wextra -Wpedantic -std=c11 -o hello_again hello_again.c</span>
+<span class="p">❯</span> <span class="cmd">./hello_again</span>
+<span class="out">Hello World from anonymous?
+This is the real hello world...</span>
+
+<span class="cmt">// identical output to v1. the .c extension changed nothing.</span></pre></div>
+    </div>
+  </div>
+
+  <!-- Deep explanation for v2 -->
+  <div class="explain">
+    <h4>Deep Explanation — why the extension is irrelevant, and what the convention actually means</h4>
+    <p>
+      <strong>The preprocessor does not inspect extensions:</strong> The <code>#include</code>
+      directive takes a filename. The preprocessor opens that filename, reads it, and pastes it.
+      It does not look at the extension to decide how to interpret the content. It does not
+      validate that a <code>.h</code> file contains only declarations. It does not refuse to
+      include a <code>.c</code> file. The distinction between <code>.h</code> and <code>.c</code>
+      exists entirely in the conventions of human programmers and the tooling built around those
+      conventions — make, IDEs, linters — not in the compiler or preprocessor itself.
+    </p>
+    <p>
+      <strong>What <code>.h</code> communicates:</strong> The extension is a signal to
+      <em>people</em> (and tools) that this file is a header: it should contain only declarations,
+      type definitions, macros, and inline functions — things that are safe to include in multiple
+      translation units without violating the One Definition Rule. A file named <code>.c</code>
+      conventionally contains exactly one translation unit's worth of definitions — code that gets
+      compiled once and linked. When you name a file <code>stdio.c</code>, you are telling every
+      programmer who reads your project: "this file has runnable definitions in it, compile it
+      separately." When you name it <code>stdio.h</code>, you are saying: "include this freely,
+      it is safe to paste everywhere."
+    </p>
+    <p>
+      <strong>Your conclusion in the source comment was exactly correct:</strong> <em>"anything.h
+      is just a representation that it is not a normal C file, but a headers file which does not
+      include any executable stuff, but only definitions and declarations of constants and those
+      functions are actually present in another file — libc library."</em> The only precision
+      to add: the word "definitions" in that comment refers to type definitions
+      (<code>typedef</code>) and macro definitions (<code>#define</code>), not function definitions.
+      Function definitions with bodies should not be in headers — only declarations.
+      That distinction is the core lesson of ODR.
+    </p>
+    <p>
+      <strong>When you legitimately <em>would</em> <code>#include</code> a <code>.c</code> file:</strong>
+      There is one real-world pattern where this is done intentionally: unity builds (also called
+      single-translation-unit builds). Some projects have a <code>unity.c</code> file that contains
+      nothing but a sequence of <code>#include "module1.c"</code>, <code>#include "module2.c"</code>,
+      etc. This compiles the entire project as one giant translation unit. The advantage: the compiler
+      can optimize across all the included files simultaneously (no linker boundary). The disadvantage:
+      you lose incremental compilation — any change requires recompiling everything. It is a
+      compile-time vs runtime performance trade-off, and it only works because the files being
+      included are written carefully to avoid ODR violations when merged.
+    </p>
+  </div>
+
+  <hr class="sd">
+
+  <!-- ═══════════════════════════════════════════════════════
+       WHAT LIBC ACTUALLY IS
+  ════════════════════════════════════════════════════════ -->
+
+  <div class="discovery info">
+    <div class="disc-label">Definition — libc and the linker's role</div>
+    <h3>Where printf actually lives, and how your binary finds it at runtime</h3>
+
+    <div class="term" style="margin-top:10px">
+      <div class="term-bar">
+        <div class="term-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <span class="term-label">tracing printf from header to library to binary</span>
+      </div>
+      <div class="term-body"><pre><span class="cmt"># where is the real printf implementation?</span>
+<span class="p">❯</span> <span class="cmd">nm -D /usr/lib/libc.so.6 | grep " printf$"</span>
+<span class="out">000000000006f4a0 T printf</span>
+<span class="cmt"># T = text section = compiled executable code, at that address in libc</span>
+
+<span class="cmt"># what does the linker actually link against?</span>
+<span class="p">❯</span> <span class="cmd">ldd ./hello_again</span>
+<span class="out">    linux-vdso.so.1 (0x00007ffd...)
+    libc.so.6 => /usr/lib/libc.so.6 (0x00007f...)
+    /lib64/ld-linux-x86-64.so.2 (0x00007f...)</span>
+<span class="cmt"># your binary depends on libc.so.6 — printf is resolved from there at runtime</span>
+
+<span class="cmt"># see the unresolved printf reference in your object file before linking</span>
+<span class="p">❯</span> <span class="cmd">gcc -c hello_again.c -o hello_again.o</span>
+<span class="p">❯</span> <span class="cmd">nm hello_again.o | grep printf</span>
+<span class="out">                 U printf</span>
+<span class="cmt"># U = undefined = reference exists but no address yet. linker will fill this in.</span></pre></div>
+    </div>
+  </div>
+
+  <div class="explain">
+    <h4>Deep Explanation — the full journey from source to running process</h4>
+    <p>
+      <strong>The three pieces:</strong> There are three distinct things involved in using
+      <code>printf</code>: the <em>declaration</em> (in <code>stdio.h</code> — tells the compiler
+      the function exists and its signature), the <em>call site</em> (in your <code>main</code> —
+      the compiler emits a <code>call printf</code> instruction with an unresolved address), and
+      the <em>definition</em> (in <code>libc.so.6</code> — the actual machine code that formats
+      and writes the string). These three live in entirely different places and are connected at
+      different stages of the build.
+    </p>
+    <p>
+      <strong>Static vs dynamic linking:</strong> By default on Linux, gcc links programs
+      <em>dynamically</em> against libc — the <code>printf</code> address is not fixed at
+      compile time. Instead, the ELF binary records a dependency on <code>libc.so.6</code>
+      (you see this with <code>ldd</code>). When the kernel loads your program via
+      <code>execve()</code>, the dynamic linker (<code>ld-linux-x86-64.so.2</code>) runs
+      first, loads <code>libc.so.6</code> into the process's address space, resolves the
+      <code>printf</code> symbol to its actual address in the loaded library, and patches
+      the call site in your code before your <code>main</code> runs. This is why every
+      Linux process has libc loaded — the dynamic linker handles it automatically.
+    </p>
+    <p>
+      <strong>Why this matters for your experiment:</strong> In v1 and v2, you used your
+      local modified header — which changed what the <em>preprocessor</em> pasted in.
+      But the linker was completely unaffected. It still found <code>printf</code> in
+      <code>libc.so.6</code> and resolved the call correctly. The header and the library
+      are fully independent. You can use any header you like — as long as the declaration
+      you give the compiler matches the actual function signature in the library, everything
+      will work. If they mismatch (wrong argument types, wrong return type), you get
+      undefined behavior at runtime — which is another reason why using the real, correct
+      header matters in practice.
+    </p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       CONCLUSIONS TABLE
+  ════════════════════════════════════════════════════════ -->
+
+  <hr class="sd">
+
+  <div class="section-title" style="font-size:22px; margin-bottom:8px">Conclusions — two versions, five things established</div>
+  <p class="section-desc" style="margin-bottom:16px">What this session proved</p>
+
+  <table class="vtable">
+    <tr><th>Question</th><th>Answer</th></tr>
+    <tr>
+      <td>Can you include a locally modified copy of <code>stdio.h</code> and have your additions available?</td>
+      <td class="vok">Yes. <code>#include "stdio.h"</code> (quotes) finds your local copy first. The preprocessor pastes it in — including anything you appended — before compilation begins.</td>
+    </tr>
+    <tr>
+      <td>Does the <code>.h</code> extension mean anything to the compiler or preprocessor?</td>
+      <td class="vok">No. Renaming to <code>stdio.c</code> and changing the include to <code>"stdio.c"</code> produces byte-for-byte identical output. The extension is a human convention, not a language rule.</td>
+    </tr>
+    <tr>
+      <td>What does <code>stdio.h</code> actually contain?</td>
+      <td style="color:var(--accent)">Function <em>declarations</em>, type definitions, and macros only. No executable code. The actual <code>printf</code> implementation lives in <code>libc.so.6</code>, linked at build time and loaded by the dynamic linker at runtime.</td>
+    </tr>
+    <tr>
+      <td>Why does putting a function <em>definition</em> in a header cause problems in multi-file projects?</td>
+      <td class="vfail">Each <code>.c</code> file that includes the header gets its own copy of the definition. The linker finds multiple definitions of the same symbol and errors: <em>multiple definition of 'try_func'</em>. Headers should contain declarations only.</td>
+    </tr>
+    <tr>
+      <td>What are include guards (<code>#ifndef _STDIO_H / #define _STDIO_H / #endif</code>) for?</td>
+      <td style="color:var(--accent)">They prevent a header's contents from being pasted more than once per translation unit. Without them, multiple indirect inclusions cause redefinition errors for every type and declaration in the header.</td>
+    </tr>
+  </table>
+
+  <div class="note" style="margin-top:24px">
+    <strong>The rule going forward:</strong> Headers contain declarations, type definitions, and macros.
+    Source files contain definitions. The <code>.h</code> / <code>.c</code> naming convention
+    communicates this intent. Always include system headers with <code>&lt;&gt;</code> and your own
+    headers with <code>""</code>. Use <code>gcc -E yourfile.c</code> any time you want to see exactly
+    what the preprocessor produced — it is the most direct way to understand what the compiler actually parsed.
+  </div>
+
+</div>
+<!-- END 1.4 -->
 
 </div><!-- .content -->
 
