@@ -1,7 +1,4 @@
 # C Pointers — Complete Deep Explanation
-# From first principles. Every concept, every bug, every memory layout.
-# Generated from first-day learning session.
-# Rename this file to .md
 
 ---
 
