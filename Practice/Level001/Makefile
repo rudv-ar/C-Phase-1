@@ -12,15 +12,21 @@
 #   - -Wall turns on warnings — good habit early on!
 # -------------------------------------------------------
 
+.PHONY: run clean 
+
 CC     = gcc
 CFLAGS = -Wall
 BIN    = $(basename $(SRC))   # e.g. swap.c → swap
 
+.PHONY: run clean 
+
 run: $(SRC)
-	$(CC) $(CFLAGS) -o $(BIN) $(SRC)
-	./$(BIN)
-	rm -f $(BIN)
+	@$(CC) $(CFLAGS) -o $(BIN) $(SRC)
+	@./$(BIN)
+	@rm -f $(BIN)
 
 clean:
-	rm -f $(BIN)
+	@rm -f $(BIN)
 
+# note that the @ prefix will supress Make from echoing each command before it executes : just for eyecandy visual.
+# .PHONY tells tese are not real files, just run them.

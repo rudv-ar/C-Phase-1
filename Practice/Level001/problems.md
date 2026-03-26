@@ -1,10 +1,12 @@
 
 I have forged out a makefile for just running the programs, then automatically deletes the binaries produced.
-Usage : See the Makefile
+Usage : See the Makefile (or) ./run <filename.c> 
 
 **1. Swap two numbers**
 Ask the user for two integers, then print them swapped.
 `Enter a: 3` `Enter b: 7` → `a = 7, b = 3`
+
+- using a temproary variable : v1
 
 **2. Odd or Even**
 Read an integer and print whether it's odd or even.
