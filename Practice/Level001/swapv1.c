@@ -11,7 +11,9 @@
 int main(void) {
   // this main returns an integer type, takes zero arguments : void 
   // initialise the empty integers, possibly setting them to 0 is a good behaviour.
-  int a = 0, b = 0;
+  int a = 0, b = 0; 
+  // intentionally initialsed to 0 because when you leave it uninit, int a; trying to read that address is a garbage. For safety purposes. 
+  // but in global level, int a; is fine because the kernel will zerorize every value in the .bss (uninit global, static variables.)
   printf("Enter two numbers seperated by a single space, make sure the numbers are integers : ");
   // I am not adding a newline here for visual purposes.
   // scanf takes two integers
@@ -28,4 +30,6 @@ int main(void) {
   b = temp;
 
   printf("The swapped variables (a, b) = (%d, %d) \n", a, b);
+  return 0;
+  // mybad, I just forgot this crucial return... Never forget this. 
 }
