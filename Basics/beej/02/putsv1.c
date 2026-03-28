@@ -3,11 +3,13 @@
 // I noticed this puts in a disassembly. When you do not use any of the formating features of printf like %c to insert a char stuffs like that, 
 // The compiler will optimise that for a SAFER AND FASTER purpose....
 // I will replace the printf with puts..... and this puts is available in the stdio.h lib.
+// I am beginning to realise that there are too many binaries in my repo...
+// But we will remove that after crossing arrays...
 
 #include <stdio.h> 
 
 int main(void) {
-    printf("this is a printf");
+    printf("this is a printf\n");
     // use the objdump -x to get the output of this as header files, -d for dumping the disassembly : lets go with -d...
 
 }
