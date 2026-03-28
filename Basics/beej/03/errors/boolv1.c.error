@@ -1,0 +1,28 @@
+// historically, c did not have any bool type. In C, 0 is false, any other integer is true, includes negative or positive.
+// we can demonstrate a simple bool conditioned stuff using if else statements.
+
+#include <stdio.h> 
+
+int main(void) {
+    int true = 1;
+    int false = 0;
+
+    if (true) {
+        printf("This will be printed if true...\n");
+    }
+    if (false) {
+        printf("This will be printed if false...\n");
+    }
+}
+
+// Oh, my bad, seems like the true and false are keywords in C... I thought C never had them...
+// Alright, the compiler shouts this...
+
+boolv1.c: In function ‘main’:
+boolv1.c:7:9: error: expected identifier or ‘(’ before ‘true’
+    7 |     int true = 1;
+      |         ^~~~
+boolv1.c:8:9: error: expected identifier or ‘(’ before ‘false’
+    8 |     int false = 0;
+      |         ^~~~~
+make: *** [Makefile:24: run] Error 1

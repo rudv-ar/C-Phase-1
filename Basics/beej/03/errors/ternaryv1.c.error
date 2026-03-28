@@ -1,0 +1,109 @@
+// these are something which I saw in the QML bool based property setting. color: width > 100 ? 10 : 20 
+// This statement will  assign to color if width is greater than 100, it gives 10, else 20.
+// These are just if else statements in expressions...
+
+#include <stdio.h>
+
+int main(void) {
+
+    int parent_width = 200; // I am stack here!!...
+    char *parent_color = "green"; // this is pointer to a address in .rodata
+
+    printf("This is width : %d; This is color : %s", parent_width > 100 ? 100 : parent_width, parent_color == "black" ? "white" : parent_color);
+    // if parent width is greater than 100, then print width as 100, else print the same as parent width; 
+    // if the parent color is eqall to black, then print white for color, else same as parent_color
+}
+
+Why did the compiler warn about this? My bad.. DID I JUST FORGET THIS RULE?
+
+ternaryv1.c: In function ‘main’:
+ternaryv1.c:12:108: warning: comparison with string literal results in unspecified behavior [-Waddress]
+   12 |     printf("This is width : %d; This is color : %s", parent_width > 100 ? 100 : parent_width, parent_color == "black" ? "white" : parent_color);
+      |                                                                                                            ^~
+This is width : 100; This is color : green⏎
+
+
+### I found why...
+- See, we have defined a char pointer : LHS type = char *
+- But we are comparing with a string type "black", which is actually not a char * type...
+- Before comparison, we must cast the type of "black" to a char * using (char *)"black"... --> this is a wrong statement....
+- A simple rule is that, THERE WILL BE NO ERRORS untill the type in LHS = type in RHS. And will not raise any undefined behavior.
+
+
+### The exact fix : use strcmp : string comparision
+
+You're on the right track about the pointer issue, but your fix isn't quite right. Casting `(char *)"black"` still compares **pointer addresses**, not string contents — and that's the real problem here.
+
+**What's actually happening:**
+
+`parent_color == "black"` compares two **memory addresses** (where the pointers point), not the characters they contain. `parent_color` and the literal `"black"` live at different addresses in `.rodata`, so they'll never be equal.
+
+**The correct fix is `strcmp`:**
+
+```c
+#include <stdio.h>
+#include <string.h>  // for strcmp
+
+int main(void) {
+    int parent_width = 200;
+    char *parent_color = "green";
+
+    printf("This is width : %d; This is color : %s",
+        parent_width > 100 ? 100 : parent_width,
+        strcmp(parent_color, "black") == 0 ? "white" : parent_color);
+}
+```
+
+`strcmp` returns `0` when the strings are **character-for-character equal**, which is what you actually want.
+
+**The rule to remember:** In C, `==` on pointers checks *"do these point to the same address?"*, not *"do these contain the same string?"*. Always use `strcmp` for string comparison.
+
+### here are the rules for strcmp
+
+i`strcmp` compares strings **byte by byte** from left to right, stopping at the first difference or the null terminator `\0`.
+
+---
+
+**Rule 1: Returns 0 when equal**
+```c
+strcmp("hello", "hello") // 0
+```
+
+**Rule 2: Returns negative when first < second**
+```c
+strcmp("apple", "banana") // negative, because 'a' < 'b'
+```
+
+**Rule 3: Returns positive when first > second**
+```c
+strcmp("banana", "apple") // positive, because 'b' > 'a'
+```
+
+**Rule 4: Comparison is based on ASCII values**
+```c
+strcmp("Z", "a") // negative! because 'Z' = 90, 'a' = 97 in ASCII
+```
+Uppercase letters come *before* lowercase in ASCII.
+
+**Rule 5: Length matters when one is a prefix of another**
+```c
+strcmp("abc", "abcd") // negative, because "abc" ends earlier ('\0' < 'd')
+```
+
+**Rule 6: It's case-sensitive**
+```c
+strcmp("Hello", "hello") // negative, 'H'(72) < 'h'(104)
+```
+Use `strcasecmp` (Linux) or `_stricmp` (Windows) for case-insensitive comparison.
+
+**Rule 7: Empty string is less than everything**
+```c
+strcmp("", "a") // negative
+strcmp("", "") // 0
+```
+
+---
+
+The mental model is simple: it's essentially **alphabetical order, but using raw ASCII values**. So always watch out for uppercase vs lowercase — it trips up most beginners.
+
+So this is genuinely an AI content, for my biopsy content, we will do it later when we encounter it in our book.

@@ -1,0 +1,15 @@
+// these are something which I saw in the QML bool based property setting. color: width > 100 ? 10 : 20 
+// This statement will  assign to color if width is greater than 100, it gives 10, else 20.
+// These are just if else statements in expressions...
+
+#include <stdio.h>
+
+int main(void) {
+
+    int parent_width = 200; // I am stack here!!...
+    char *parent_color = "green"; // this is pointer to a address in .rodata
+
+    printf("This is width : %d; This is color : %s", parent_width > 100 ? 100 : parent_width, parent_color == (char *)"black" ? "white" : parent_color);
+    // if parent width is greater than 100, then print width as 100, else print the same as parent width; 
+    // if the parent color is eqall to black, then print white for color, else same as parent_color
+}
