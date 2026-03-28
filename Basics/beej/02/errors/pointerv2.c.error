@@ -1,0 +1,59 @@
+#include <stdio.h>
+
+int main(void) {
+    int a = 100;
+    float b = 3.14;
+    char c = 'A';
+    double k = 3.234234;
+    long l = 234234L;
+    unsigned int alpha = 2323;
+
+    // pointers : <type> *
+    int *p1 = &a; // remember that &a returns us int * type .
+    float *p2 = &b;
+    char *p3 = &c;
+    double *p4 = &k;
+    long *p5 = &l;
+    unsigned int *p6 = &alpha;
+
+    printf("a: type int :%d - address : %p\n", a, &a); // we should note at this point that p1 = &a both will be producing the same address. Did we fail to cast the pointer?
+    printf("b: type float :%f - address : %p\n", b, p2);
+    printf("c: type char :%c - address : %p\n", c, p3);
+    printf("k: type double :%f - address : %p\n", k, p4);
+    printf("l: type long :%ld - address : %p\n", l, p5);
+    printf("alpha: type unsigned int :%d - address : %p\n", alpha, p6);
+
+
+
+}
+
+## As expected, we got warnings : 
+
+❯ clang -o pointerv2 pointerv2.c -Wextra -Wall -pedantic -std=c23
+pointerv2.c:19:51: warning: format specifies type 'void *' but the
+      argument has type 'int *' [-Wformat-pedantic]
+   19 |     printf("a: type int :%d - address : %p\n", a, &a); // we s...
+      |                                         ~~        ^~
+pointerv2.c:20:53: warning: format specifies type 'void *' but the
+      argument has type 'float *' [-Wformat-pedantic]
+   20 |     printf("b: type float :%f - address : %p\n", b, p2);
+      |                                           ~~        ^~
+pointerv2.c:22:54: warning: format specifies type 'void *' but the
+      argument has type 'double *' [-Wformat-pedantic]
+   22 |     printf("k: type double :%f - address : %p\n", k, p4);
+      |                                            ~~        ^~
+pointerv2.c:23:53: warning: format specifies type 'void *' but the
+      argument has type 'long *' [-Wformat-pedantic]
+   23 |     printf("l: type long :%ld - address : %p\n", l, p5);
+      |                                           ~~        ^~
+pointerv2.c:24:68: warning: format specifies type 'void *' but the
+      argument has type 'unsigned int *' [-Wformat-pedantic]
+   24 |   ...type unsigned int :%d - address : %p\n", alpha, p6);
+      |                                        ~~            ^~
+pointerv2.c:12:10: warning: unused variable 'p1' [-Wunused-variable]
+   12 |     int *p1 = &a; // remember that &a returns us int * type .
+      |          ^~
+6 warnings generated.
+
+
+As I failed to cast the pointer type to void, the compiler : clang shouts warnings... Why? What is the matter with converting into (void *) : I have no idea...

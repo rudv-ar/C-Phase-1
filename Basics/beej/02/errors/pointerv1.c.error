@@ -1,0 +1,26 @@
+#include <stdio.h>
+
+int main(void) {
+  // define an integer : 
+  int a = 100;
+  // define a float : 
+  float b = 100.0;
+  // define a char :
+  char c = 'A';
+
+  // What if suppose I need the address of the particular variable?
+  // We use &variable to get the address of the variable.
+  // But do you know what happens if we try to store the address in normal variables?
+
+  int k = &a; 
+}
+
+### This is the exact error 
+
+pointer01.c: In function ‘main’:
+pointer01.c:15:11: error: initialization of ‘int’ from ‘int *’ makes integer from pointer without a cast [-Wint-conversion]
+   15 |   int k = &a;
+      |           ^
+
+- As notable : initialization of int from int * => This implies that the address we just got is of a type : int *; which is a type of pointer - integer pointer.
+- <type> * 
