@@ -15,7 +15,7 @@
 // We just do this... <return type> <function pointer if any *>functionname(arguments...); done, we have just defined the general
 // form of a function prototype.
 
-// 1) modify point : take an
+// 1) modify point : take an : stop here, I will continue it later.. Now need to read the book...
 
 
 // struct definitions -----------------------------------------------------------------------------------------------------------
