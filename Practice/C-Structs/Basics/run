@@ -1,0 +1,5 @@
+#!/bin/bash 
+
+# this is a bash script for running program
+
+make run SRC="${1}"
