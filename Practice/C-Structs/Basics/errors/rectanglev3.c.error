@@ -1,0 +1,17 @@
+// this is not error in code, but it is error in compiler; but still, v3 had a bug; after learning about the math.h libaray...
+
+./run rectanglev3.c
+/usr/bin/ld: /tmp/ccpVAfp2.o: in function `distance_point':
+rectanglev3.c:(.text+0x114): undefined reference to `sqrtf'
+collect2: error: ld returned 1 exit status
+make: *** [Makefile:24: run] Error 
+
+See this : it is a error from ld. 
+ld is the linux linker which links the libraries, stitches together the object files....; and we see it in the disassembly as well as objdump file, there is a DYNAMIC LINKER SECTION; so the error seemingly arises from the linker problem.
+
+The error in code is : we have float type for distance_point calculation, but sqrt function in math.h is defined to take a double as input. there could possibly be a trimming of bytes as double's size is greater than float's size, but we appearantly are passing float; there is a fix; we can use the sqrtf function which is specifically designed for the float to be taken into sqrt argument.
+
+Historically, it seems, after some research about why my compiler is throwing this error; glibc; this is the file : the c main library which includes the stdint, stdio, stdlib, stdbool, it std* libraries; unfortunately, we do not have any stuff for maths here; it is located in a seperate lib file glibm; so we need to explicitly tell the compiler to link that; because they are in two different locations..
+
+fix : using the -lm flag...
+CURIOUS? let's perform some biopsy; but as it is a practice session, I should be properly doing it in the Basics directory; later...
