@@ -1,0 +1,157 @@
+// The Problem : Create a struct BankAccount with account number, owner name, and balance. Write three functions — deposit, withdraw, and printBalance — each taking a pointer to a BankAccount. In withdraw, don't allow balance to go negative, print an error instead.
+
+// Now that we need to create a struct BankAccount; We can also model money right? create another struct Money;
+// I am going to do all the Money related calculations using Money; and the balance is a struct to money; lately I learnt the typedef. We are goining to enfore this here...
+
+//==========================================INCLUDES HERE=============================================================================================
+
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
+// no more unsigned int etc stuffs; 
+// assuming there exists a megatrillionare, we are going to use uint64_t; Wait, is it first existing? Maybe, in the stdint library;
+// tip : we need to use -lm to instruct the dynamic linker ld to link the glibm to glibc (linux systesm...); else we will get an error.
+
+
+
+//======================================== DEFINITIONS HERE ===========================================================================================
+
+// Now that I need to first put the definitions of the structs here....
+typedef struct BankAccount bankaccount;
+typedef struct Money money;
+// Now that we have two types : bankaccount, another is money; money x = {...};, simple as that. But we are also allowed to use struct Money x = {...};
+
+
+// Now that we need to put the definitions of the helper functions here....
+// withdraw_money : a function that acts on a money type...
+// we shall have it get an uint64_t, because none is going to spend a 0.2 dollars; we just spend in whole numbers.
+void withdraw_money(money *data, uint64_t reduction);
+
+// deposit_money : a function that deposits the given addition value...
+void deposit_money(money *data, uint64_t addition);
+
+// This function acts on the bankaccount, getting the balance from its money type...
+// get_balance : a function returning a uint64_t.
+uint64_t get_balance(bankaccount *acc);
+
+// print_balance : prints the full account summary.
+void print_balance(bankaccount *acc);
+
+
+//======================================= DECLARATIONS OF STRUCTS HERE =================================================================================
+
+
+// 1) My Bank Account
+typedef struct BankAccount {
+    // you are not allowed to edit owner name;
+    const char *owner;
+    // you are also not allowed to edit the account number...
+    const int number;
+    // but you can change the data of the money; the values, etc...
+    money data;
+
+} bankaccount;
+
+// 2) My Money                      
+typedef struct Money {              // FIX 1: typdef -> typedef
+    // the number of withdrawals performed.
+    int withdraws;
+    // the number of deposits performed.
+    int deposits;
+    // current value of the money inherited..(INHEREITED FROM FATHER....)
+    uint64_t value;
+} money;
+
+
+
+//========================================= DECLARE THE HELPER FUNCTIONS =================================================================================
+
+// get_balance
+uint64_t get_balance(bankaccount *acc) {
+    return acc->data.value; // (*acc).data.value
+}
+
+// withdraw_money
+void withdraw_money(money *data, uint64_t reduction) {
+    // this is a withdrawal of monely, increment the counter.
+    // we need to gaurd this; if the value is negative, the int size wraps around; but UB;
+    // FIX 2: compare directly instead of subtracting — subtraction on uint64_t wraps around if reduction > current_val.
+    uint64_t current_val = data->value;
+    if (current_val >= reduction) {
+        (data->withdraws)++;
+        // deduct the value of money;
+        data->value -= reduction;
+        printf("A value of %" PRIu64 " dollars withdrawn.\n", reduction);  // FIX 4: %ld -> PRIu64
+    } else {
+        printf("You can only withdraw : %" PRIu64 " dollars.\n", current_val);
+        printf("Your current account has an invalid balance : %" PRIu64 "; cannot withdraw.\n", current_val);
+    }
+}
+
+// deposit money...
+void deposit_money(money *data, uint64_t addition) {
+    // this is a withdrawal of monely, increment the counter.
+    // we need to gaurd this; if the value is negative, the int size wraps around; but UB;
+    // FIX 3: uint64_t is always >= 0, the check was useless. just always deposit.
+    (data->deposits)++;
+    // add the value of money;
+    data->value += addition;
+    printf("A value of %" PRIu64 " dollars deposited.\n", addition);  // FIX 4: %ld -> PRIu64
+}
+
+// print_balance
+void print_balance(bankaccount *acc) {
+    printf("\n========== Account Summary ==========\n");
+    printf("[Owner]          : %s\n",                   acc->owner);
+    printf("[Account Number] : %#010x\n",               acc->number);
+    printf("[Balance]        : %" PRIu64 " dollars\n",  get_balance(acc));
+    printf("[Deposits]       : %d\n",                   acc->data.deposits);
+    printf("[Withdrawals]    : %d\n",                   acc->data.withdraws);
+    printf("=====================================\n\n");
+}
+
+
+//========================================= MAIN =================================================================================
+
+int main(void) {
+    // create a bank account for orio; starts with 1000 dollars inherited (INHERITED FROM FATHER....)
+    bankaccount orio = {
+        .owner  = "Orio",
+        .number = 0xA3F1,
+        .data   = {
+            .withdraws = 0,
+            .deposits  = 0,
+            .value     = 1000,
+        }
+    };
+
+    // print initial state
+    print_balance(&orio);
+
+    // deposit some money
+    deposit_money(&orio.data, 500);
+
+    // withdraw some money
+    withdraw_money(&orio.data, 200);
+
+    // try to overdraft — should print error
+    withdraw_money(&orio.data, 99999);
+
+    // print final state
+    print_balance(&orio);
+
+    return 0;
+}
+
+
+
+############################################ WHAT ERROR NOW? 
+
+bankaccv1.c:51:11: error: field ‘data’ has incomplete type
+   51 |     money data;
+      |           ^~~~
+
+
+possible reason : the ordering matters; previous examples, I have used pointers to structs instead of direct pointers. But in this case, the struct itself is embedded inise another struct; As a result, we shoul have the most embedded struct defined completely before embedding inside this struct BankAccount; Hence, we should probably change the ordering;
+
+
