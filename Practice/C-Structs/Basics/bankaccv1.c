@@ -6,8 +6,8 @@
 //==========================================INCLUDES HERE=============================================================================================
 
 #include <stdio.h>
-#include <math.h> 
-#include <stdint.h> 
+#include <stdint.h>
+#include <inttypes.h>
 // no more unsigned int etc stuffs; 
 // assuming there exists a megatrillionare, we are going to use uint64_t; Wait, is it first existing? Maybe, in the stdint library;
 // tip : we need to use -lm to instruct the dynamic linker ld to link the glibm to glibc (linux systesm...); else we will get an error.
@@ -30,33 +30,116 @@ void withdraw_money(money *data, uint64_t reduction);
 // deposit_money : a function that deposits the given addition value...
 void deposit_money(money *data, uint64_t addition);
 
-
 // This function acts on the bankaccount, getting the balance from its money type...
 // get_balance : a function returning a uint64_t.
 uint64_t get_balance(bankaccount *acc);
 
+// print_balance : prints the full account summary.
+void print_balance(bankaccount *acc);
+
 
 //======================================= DECLARATIONS OF STRUCTS HERE =================================================================================
+
+
+// 2) My Money                      // FIX 2: reordered : if not compiler errors - invalid data in money data; First we should have the toplevel struct defiend by data....
+typedef struct Money {              // FIX 1: typdef -> typedef
+    // the number of withdrawals performed.
+    int withdraws;
+    // the number of deposits performed.
+    int deposits;
+    // current value of the money inherited..(INHEREITED FROM FATHER....)
+    uint64_t value;
+} money;
 
 // 1) My Bank Account
 typedef struct BankAccount {
     // you are not allowed to edit owner name;
-    const char *owner; 
+    const char *owner;
     // you are also not allowed to edit the account number...
     const int number;
     // but you can change the data of the money; the values, etc...
     money data;
 
-} bankaccount ;
+} bankaccount;
 
-// 2) My Money 
-typdef struct Money {
-    // the number of withdrawals performed.
-    int withdraws; 
-    // the number of deposits performed.
-    int deposits;
-    // current value of the money inherited..(INHEREITED FROM FATHER....)
-} money ;
 
 
 //========================================= DECLARE THE HELPER FUNCTIONS =================================================================================
+
+// get_balance
+uint64_t get_balance(bankaccount *acc) {
+    return acc->data.value; // (*acc).data.value
+}
+
+// withdraw_money
+void withdraw_money(money *data, uint64_t reduction) {
+    // this is a withdrawal of monely, increment the counter.
+    // we need to gaurd this; if the value is negative, the int size wraps around; but UB;
+    // FIX 2: compare directly instead of subtracting — subtraction on uint64_t wraps around if reduction > current_val.
+    uint64_t current_val = data->value;
+    if (current_val >= reduction) {
+        (data->withdraws)++;
+        // deduct the value of money;
+        data->value -= reduction;
+        printf("A value of %" PRIu64 " dollars withdrawn.\n", reduction);  // FIX 4: %ld -> PRIu64
+    } else {
+        printf("You can only withdraw : %" PRIu64 " dollars.\n", current_val);
+        printf("Your current account has an invalid balance : %" PRIu64 "; cannot withdraw.\n", current_val);
+    }
+}
+
+// deposit money...
+void deposit_money(money *data, uint64_t addition) {
+    // this is a withdrawal of monely, increment the counter.
+    // we need to gaurd this; if the value is negative, the int size wraps around; but UB;
+    // FIX 3: uint64_t is always >= 0, the check was useless. just always deposit.
+    (data->deposits)++;
+    // add the value of money;
+    data->value += addition;
+    printf("A value of %" PRIu64 " dollars deposited.\n", addition);  // FIX 4: %ld -> PRIu64
+}
+
+// print_balance
+void print_balance(bankaccount *acc) {
+    printf("\n========== Account Summary ==========\n");
+    printf("[Owner]          : %s\n",                   acc->owner);
+    printf("[Account Number] : %#010x\n",               acc->number);
+    printf("[Balance]        : %" PRIu64 " dollars\n",  get_balance(acc));
+    printf("[Deposits]       : %d\n",                   acc->data.deposits);
+    printf("[Withdrawals]    : %d\n",                   acc->data.withdraws);
+    printf("=====================================\n\n");
+}
+
+
+//========================================= MAIN =================================================================================
+
+int main(void) {
+    // create a bank account for orio; starts with 1000 dollars inherited (INHERITED FROM FATHER....)
+    bankaccount orio = {
+        .owner  = "Orio",
+        .number = 0xA3F1,
+        .data   = {
+            .withdraws = 0,
+            .deposits  = 0,
+            .value     = 1000,
+        }
+    };
+
+    // print initial state
+    print_balance(&orio);
+
+    // deposit some money
+    deposit_money(&orio.data, 500);
+
+    // withdraw some money
+    withdraw_money(&orio.data, 200);
+
+    // try to overdraft — should print error
+    withdraw_money(&orio.data, 99999);
+
+    // print final state
+    print_balance(&orio);
+
+    return 0;
+}
+
