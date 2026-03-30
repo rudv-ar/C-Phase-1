@@ -1,0 +1,66 @@
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from ./insertion_sortv3...
+(gdb) help
+List of classes of commands:
+
+aliases -- User-defined aliases of other commands.
+breakpoints -- Making program stop at certain points.
+data -- Examining data.
+files -- Specifying and examining files.
+internals -- Maintenance commands.
+obscure -- Obscure features.
+running -- Running the program.
+stack -- Examining the stack.
+status -- Status inquiries.
+support -- Support facilities.
+text-user-interface -- TUI is the GDB text based interface.
+tracepoints -- Tracing of program execution without stopping the program.
+user-defined -- User-defined commands.
+
+Type "help" followed by a class name for a list of commands in that class.
+Type "help all" for the list of all commands.
+Type "help" followed by command name for full documentation.
+Type "apropos word" to search for commands related to "word".
+Type "apropos -v word" for full documentation of commands related to "word".
+Command name abbreviations are allowed if unambiguous.
+(gdb) break main --> here we are setting a breakpoint for inspection purposes...
+Breakpoint 1 at 0x1161: file insertion_sortv3.c, line 12.
+(gdb) next
+❌️ The program is not being run.
+(gdb) run --> Then run the binary....
+Starting program: /mnt/chaos/C/C-Phase-1/Memory/insertion_sort/insertion_sortv3
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <https://debuginfod.archlinux.org>
+Enable debuginfod for this session? (y or [n]) n
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/usr/lib/libthread_db.so.1".
+
+Breakpoint 1, main () at insertion_sortv3.c:12
+12	int main(void) {
+(gdb) next
+13	    int array[] = {1, 5, 7, 21, 34, 11, 10, 90, -21, 44, 33};
+(gdb) next
+14	    int size = sizeof(array) / sizeof(array[0]);
+(gdb) next
+16	    printf("Array Before Sorting : ");
+(gdb) next
+17	    printArray(&array[0], size);
+(gdb) next
+Array Before Sorting : 1 5 7 21 34 11 10 90 -21 44 33
+18	    insertionSort(&array[0], size);
+(gdb) next
+19	    printf("Array After Sorting : ");
+(gdb) next
+20	    printArray(&array[0], size);
+(gdb) next
+Array After Sorting : -21 1 5 7 10 11 21 33 34 44 90
+22	}
+(gdb) next
+0x00007ffff7dd36c1 in ?? () from /usr/lib/libc.so.6 --> main stack destroyed here.
+(gdb) next
+❌️ Cannot find bounds of current function --> This is because the main stack just got destryed...
+(gdb)
