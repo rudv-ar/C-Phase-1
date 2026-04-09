@@ -1,0 +1,30 @@
+// the get and put chars 
+
+#include <stdio.h> 
+
+int main(void) {
+    int c = 0;
+    c = getchar(); // try giving it a number this time?
+    putchar(c);
+    putchar(789347832489234789); // obviously, it is gonna buffer overflow this time, but what iwll be it's results? an error? warning? sigsegv(not this because it happens when you try to write into memory, restricted area; but we are writing in stdout...)? What else? a wraparound to some value?
+    // what happens if we give arbitarily large nummber like this? 21342314?
+    // Surprising?
+
+}
+
+
+//========================================================================
+
+With these flags enabled : the function compiled.. and it gave this output...
+CFLAGS = -Wall -std=c23 -Wextra -pedantic
+
+
+getputcharv2.c: In function ‘main’:
+getputcharv2.c:9:13: warning: overflow in conversion from ‘long int’ to ‘int’ changes value from ‘789347832489234789’ to ‘-406924955’ [-Woverflow]
+    9 |     putchar(789347832489234789); // obviously, it is gonna buffer overflow this time, but what iwll be it's results? an error? warning? sigsegv(not this because it happens when you try to write into memory, restricted area; but we are writing in stdout...)? What else? a wraparound to some unicode value?
+      |             ^~~~~~~~~~~~~~~~~~
+a
+ae⏎
+
+
+They wrapped around to e; why e specifically? because C chars have 0 to 255 values only. and ie, 256 in total. modulo 789347832489234789 with 256, ? we get 101; that is exactly the int repr of char e. By default does C wrap around? but we did not provide unsigned int? how did this happen? but as per the definition of undefined behaviour, it is undefined, but pretty much I get the same value every time...Why?
